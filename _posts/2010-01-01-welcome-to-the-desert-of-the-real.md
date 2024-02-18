@@ -6,9 +6,9 @@ subtitle: 'Rosa终于有博客啦（大声）！'
 description: >-
   Rosa 的第一篇博客
 image: >-
-  /assets/img/uploads/profile.jpg
+  /assets/img/uploads/sea.jpg
 optimized_image: >-
-  /assets/img/uploads/profile.jpg
+  /assets/img/uploads/sea.jpg
 category: misc
 tags:
   - misc

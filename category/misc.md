@@ -1,6 +1,6 @@
 ---
 layout: category
-title: Life
-slug: life
+title: Misc
+slug: misc
 description: A category for life related posts.
 ---

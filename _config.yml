@@ -1,14 +1,13 @@
 # Site Settings
 name: Rosayxy
-title: Jekflix | A blog theme for Jekyll
-description: Jekflix is a template for Jekyll inspired by Netflix and made by
-  Thiago Rossener.
+title: Rosayxy's Blog ~
+description: Rosayxy 的小栈 ~
 tags:
   - blog
-  - template
-  - jekyll
-  - theme
-  - netlify
+  - Rosayxy
+  - 于新雨
+  - ctf
+  - pwn
 show_hero: true
 menu:
   - title: Home
@@ -102,4 +101,4 @@ exclude: [
 ]
 
 # Theme
-version: v3.1.2
+version: v1.3.37

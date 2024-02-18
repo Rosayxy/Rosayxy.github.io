@@ -16,6 +16,9 @@ permalink: /staff/
       {% if author.position %}
         <h3 class="position">{{ author.position }}</h3>
       {% endif %}
+      {% if author.bio %}
+        <h3 class="bio">{{ author.bio }}</h3>
+      {% endif %}
     </div>
   {% endfor %}
 </div>

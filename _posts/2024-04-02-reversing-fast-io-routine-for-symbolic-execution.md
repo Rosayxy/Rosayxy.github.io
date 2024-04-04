@@ -1,5 +1,5 @@
 ---
-date: 2024-4-4 21:22:03
+date: 2024-4-2 21:22:03
 layout: post
 title: Reversing FastIo Routine for Symbolic Execution Implementation
 subtitle: Looking through ntoskrnl for FastIo calls for Windows drivers

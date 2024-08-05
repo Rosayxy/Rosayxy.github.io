@@ -33,6 +33,7 @@ oddclient 逆向不太复杂，但是因为之前没怎么打过交互 pwn 所�
 ## 利用思路
 - 整体来说，我们打 ret2syscall，先用 read 把 `/bin/sh\x00` 读到一个可控地址，再用 execve 执行 `/bin/sh`   
 - 细节是为了绕过 canary 和不破坏栈上原有结构，可以注意到在 buffer 里面的不是 0-9a-fA-F 的字符会直接跳过，然后 stackbuffer 的 index 和 我们传入字符串的 index 都增加，所以可以利用这个特性不覆盖掉原有栈上内容，只写返回地址   
+
 ## 交互
 一开始让 gpt 写一个，然后它只写了一次交互的流程，花了好久才把它改成可以连续多次交互的ww    
 交互框架 belike:
@@ -79,8 +80,11 @@ while True:
 - 一个非常基本的点，应该是写成先收再发的交互形式。一开始试着选一个合理的时间间隔发包，发现会出现 server 这边还在发，client 因为 server 发的上一个包没过检查所以终止的情况，会 pipe 报错。此外，内层 while 在收不到包的时候也是需要 break 的ww ~
 - 一定要写两个 while 循环，内层的 while 对应于每次的四次交互，外层的 while 可以防止比如说 oddclient 跑挂的话，只用 gdb oddclient 就行，不用重开服务器，调试的时候省力很多 ~   
 - try-except-finally 一定要放在内层循环的外面，不然发第一遍消息之后 connection 已经被关闭了，再发消息就会报错 fd corruption 之类的奇怪错误，其实看 connection 的定义位置，应该能想到是在内层循环的外面ww ，评价是 python 没学好:（    
+
 ## exp
-把交互搞定之后，就变成一个基本栈题了hh ~ 其实笔者一开始 unhex 逆向有点小问题，所以也是调试了一会才搞定的hhh（exp 中可以看到痕迹）     
+
+把交互搞定之后，就变成一个基本栈题了hh ~ 其实笔者一开始 unhex 逆向有点小问题，所以也是调试了一会才搞定的hhh(exp 中可以看到痕迹)  
+
 ```py
 import socket
 from time import sleep
@@ -177,7 +181,6 @@ while True:
     finally:
         # Clean up the connection
         connection.close()
-
 ```
 
 

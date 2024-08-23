@@ -6,9 +6,9 @@ subtitle:
 description: >-
     rosa 从高人手中得到化妆技巧的指点，在此记录以防忘记，也可做为其他肤质/气质相近的友友的参考 ~
 image: >-
-  /assets/img/uploads/cloud.png
+  /assets/img/uploads/cloud.jpg
 optimized_image: >-
-  /assets/img/uploads/cloud.png
+  /assets/img/uploads/cloud.jpg
 category: misc
 tags:
   - misc

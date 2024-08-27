@@ -6,9 +6,9 @@ subtitle:
 description: >-
     咋会有虚拟机套壳菜单堆这种阴间玩意，，下次看它还能套啥
 image: >-
-  /assets/img/uploads/vmnote.jpg
+  /assets/img/uploads/vmnote.png
 optimized_image: >-
-  /assets/img/uploads/vmnote.jpg
+  /assets/img/uploads/vmnote.png
 category: ctf
 tags:
   - ctf

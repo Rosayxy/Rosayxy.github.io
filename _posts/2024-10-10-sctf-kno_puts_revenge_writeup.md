@@ -53,6 +53,8 @@ credit to 轩哥，在校赛出题的时候帮忙理清了 race condition 的思
        for delegation of page-fault handling to a user-space
        application, and returns a file descriptor that refers to the new
        object.
+
+
   - userfaultfd 设计出来是为了应对怎么样的情况呢？
     - 一般 pagefault 都是由内核处理，而 userfaultfd 则是**给了用户态处理 pagefault 的能力**
     - chatgpt 给出的一种应用场景是在虚拟机迁移中，可以实现在双虚拟机都在运行的时候无痛进行 mem 的迁移，或者考虑到 pagefault 超影响性能（别问我咋知道的 写点 HPC 大作业就明白了:(，把 pagefault 交给用户态处理可以更个性化的提升性能
@@ -65,7 +67,9 @@ credit to 轩哥，在校赛出题的时候帮忙理清了 race condition 的思
 
 ## 后续思路
 ### kernel base leak
-可以偷鸡：通过 /sys/kernel/notes 读取 notes 段的地址，减去偏移得到基地址    
+可以偷鸡：通过 /sys/kernel/notes 读取 notes 段的地址，减去偏移得到基地址
+见 [这里](https://lwn.net/Articles/962782/)     
+看这个发布的时间 感觉旧一点的内核版本应该都可以冲一下的        
 ### exploit
 利用 UAF 去打 pipe_buffer 劫持 pipe_operations 的 release function pointer 为栈迁移 gadget 然后打 ROP get shell    
 

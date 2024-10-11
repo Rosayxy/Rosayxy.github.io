@@ -1,5 +1,5 @@
 ---
-date: 2024-8-22 10:22:03
+date: 2024-9-8 10:22:03
 layout: post
 title: 2024 长城杯初赛 consumption writeup
 subtitle: 

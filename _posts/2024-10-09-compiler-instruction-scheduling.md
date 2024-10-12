@@ -16,6 +16,7 @@ tags:
   - instruction scheduling
   - software pipelining
   - hardware pipelining
+  - viterbi
 author: rosayxy
 paginate: true
 ---

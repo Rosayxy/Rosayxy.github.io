@@ -1,5 +1,5 @@
 ---
-date: 2024-10-10 10:22:03
+date: 2024-10-07 10:22:03
 layout: post
 title: 记下来关于 race condition 和 kernel stack pivoting 的一些思考吧
 subtitle: 2024 sctf kno_puts(revenge) writeup
@@ -45,7 +45,7 @@ credit to 轩哥，在校赛出题的时候帮忙理清了 race condition 的思
   - 在这种 ctf 题目中，我们会使用 userfaultfd 来控制时间窗口    
 
 ### userfaultfd
-- 总体效果：可以通过卡住 copy_from_user 创造出类似于 UAF 的情况
+- 总体效果：可以通过卡住 copy_from_user 创造出类似于 UAF 的情况 (**race condition-> UAF**)
 - 原理思路：
   - man7 链接镇楼 https://www.man7.org/linux/man-pages/man2/userfaultfd.2.html
 

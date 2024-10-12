@@ -18,7 +18,9 @@ author: rosayxy
 paginate: true
 ---
 # 待定系数法降复杂度
-注：这是在当时编译器比赛（全国大学生计算机系统能力大赛-编译系统设计赛）实现这个优化 pass 之前写的设计思路文档。**big credit to [Fuyuki](https://github.com/Fuyuky)**，对于当时公开测例中 *matmul 1,2,3*,*recursive call 1,2,3* 有非常好的效果，这个算法的灵感来自于 Fuyuki，当时听到的时候惊为天人（同时感谢 Fuyuki 大 gg 在实现的时候多次帮忙 debug qaq）        
+注：这是在当时编译器比赛（全国大学生计算机系统能力大赛-编译系统设计赛）实现这个优化 pass 之前写的设计思路文档。**big credit to [Fuyuki](https://github.com/Fuyuky)**   
+主要目的是把多次递归在特定情况下优化为一次递归，从而把复杂度从指数降到线性甚至常数。对于当时公开测例中 *matmul 1,2,3*,*recursive call 1,2,3* 有非常好的效果，这个算法的灵感来自于 Fuyuki，当时听到的时候惊为天人（同时感谢 Fuyuki 大 gg 在实现的时候多次帮忙 debug qaq）        
+[项目仓库](https://github.com/rrvm-project/SysYc)，主要与其中 commit 5ab76ea 有关    
 对于一些特定的函数，我们可以用待定系数法来把运算复杂度降低到O(n) 然后对通项进行模式匹配，进一步降复杂度到 O(1)    
 ## 算法
 ```

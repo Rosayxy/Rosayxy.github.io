@@ -115,6 +115,8 @@ struct State {
 所以完全可能会有同一个 instrs 对应两个状态的情况，也认为是正常的       
 对于每一个可调度指令，尝试把该指令往两个 slot 塞，得到新的 slot_times 和 slot_instrs 从而和其他参数一起得到新的 state   
 ## 参考：[杰哥算法](https://github.com/TrivialCompiler/TrivialCompiler/blob/master/src/passes/asm/scheduling.cpp)
+
+
 ```cpp
 #include "scheduling.hpp"
 #include <queue>

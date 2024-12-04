@@ -2,7 +2,7 @@
 date: 2024-11-26 10:29:05
 layout: post
 title: SECCON Quals 2024 Writeup and Reflections
-subtitle: Paragraph,
+subtitle: Paragraph, TOY/2, and make ROP great again
 description: >-
     seccon quals 2024 复现 pwn 时候的一些感悟吧
 image: >-
@@ -213,7 +213,7 @@ main 函数中有 `(*(void (__fastcall **)(char *))(*(_QWORD *)vm + 8LL))(vm);` 
 然后我们就常规操作了，用 setcontext 进行栈迁移，然后在 fake stack 上布置 ROP chain 即可完工（感觉好像比 mmm team 的做法简单一点呢（逃）    
 
 ### exp
-写的有点暴力，关键步骤都在注释里面 ~ 
+写的有点暴力，关键步骤都在注释里面 ~ 以及因为 libc 相关地址减法借位的问题，需要一个 1/8 的爆破
 ```py
 from pwn import*
 context(arch='amd64', os='linux', log_level='debug')

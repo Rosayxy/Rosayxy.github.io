@@ -1,7 +1,7 @@
 ---
 date: 2024-12-17 10:29:05
 layout: post
-title: TSGCTF 2024 FL Support Center Writeup
+title: TSG CTF 2024 FL Support Center Writeup
 subtitle: 
 description: >-
     比赛的时候差一点就出了，有点可惜
@@ -12,6 +12,7 @@ optimized_image: >-
 category: ctf
 tags:
   - SECCON
+  - TSG CTF
   - pwn
   - heap exploitation
 author: rosayxy

@@ -6,9 +6,9 @@ subtitle:
 description: >-
     modprobe binfmt-0000 cannot be processed, kmod busy with 50 threads for more than 5 seconds now
 image: >-
-  /assets/img/uploads/night_whale.jpg
+  /assets/img/uploads/error.png
 optimized_image: >-
-  /assets/img/uploads/night_whale.jpg
+  /assets/img/uploads/error.png
 category: misc
 tags:
   - cpio

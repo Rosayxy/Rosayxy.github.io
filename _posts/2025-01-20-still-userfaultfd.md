@@ -466,3 +466,7 @@ int main(){
     return 0;
 }
 ```
+## reference
+- https://blingblingxuanxuan.github.io/2023/01/10/23-01-10-kernel-pwn-useful-struct/#modprobe-path
+- https://blingblingxuanxuan.github.io/2023/03/02/230302-userfaultfd-and-setxattr-exercises/
+- https://kileak.github.io/ctf/2021/tsg-lkgit/

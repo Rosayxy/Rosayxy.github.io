@@ -1,5 +1,5 @@
 ---
-date: 2024-12-17 10:29:05
+date: 2025-01-20 10:29:05
 layout: post
 title: problem shooting not processed modprobe binfmt-0000 problem on cpio compilation
 subtitle: 

@@ -335,3 +335,8 @@ int main(){
 ## 总结
 可以 mark 一下这个任意写的方法 ~    
 快春节了，新年快乐吖 ~  
+## reference
+总体思路参考较多：https://www.ctfiot.com/211007.html     
+https://vul.360.net/archives/391     
+https://blingblingxuanxuan.github.io/2023/02/06/230206-rwctf2023-digging-into-kernel-3/     
+https://blingblingxuanxuan.github.io/2023/04/01/230401-n1ctf2022-pwn-praymoon/      

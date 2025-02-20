@@ -4,15 +4,15 @@ layout: post
 title: every fold reveals a side
 subtitle: 网鼎杯 2024 final writeup
 description: >-
-    复现一波吧
+    jemalloc play ~
 image: >-
   /assets/img/uploads/autumn_cat.jpg
 optimized_image: >-
   /assets/img/uploads/autumn_cat.jpg
 category: ctf
 tags:
-  - SECCON
-  - TSG CTF
+  - jemalloc
+  - wdb
   - pwn
   - heap exploitation
 author: rosayxy

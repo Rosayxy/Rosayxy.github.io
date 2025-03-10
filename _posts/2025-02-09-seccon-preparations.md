@@ -52,7 +52,7 @@ payload = right_chr + " " + left_chr + "a"*24 + right_chr + " "
 ![alt_text](/assets/img/uploads/exp_bomberman.png)
 
 ## DataStore2
-卡了两次，一次是在 leak libc 的时候只想到了 double free， 还有一次是在最后堆重叠写 fd 的时候没想明白（     
+卡了两次，一次是在 leak libc 的时候只想到了 double free， 还有一次是在最后堆重叠写 heap fd 的时候没想明白（     
 ### 漏洞
 ```c
 typedef struct String {
@@ -98,7 +98,7 @@ typedef struct {
 然后又去看了 writeup，才反应过来可以改那个 overlapped 的中间的 0x20 chunk 的 fd，感觉自己傻了hhhh（就像之前国赛复赛那个堆题，也是分割的方法想的不对.....）            
 
 ### IO_FILE
-改了中间 0x20 chunk fd 之后，通过一个元素的 array 把 IO_list_all 所在块申请出来，改 IO_list_all 为一个堆地址，布置一个 fake_io_file 就行了     
+改了中间 0x20 chunk fd 之后，通过只含有一个元素的 array 把 IO_list_all 所在块申请出来，改 IO_list_all 为一个堆地址，布置一个 fake_io_file 就行了     
 这里的 fake_io_file 需要分成3个 string 发送，稍微有点点 dirty hhh     
 
 ### exp

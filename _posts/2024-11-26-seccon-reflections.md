@@ -339,7 +339,7 @@ p.interactive()
 
 一个比较直观的想法是 gets 输入 8 个字节然后 puts 顺带 leak libc 地址，但是会有补0的问题，以及如果是输入 `b'a'*4+p32(0)` 的话也会无法 -1 所以我在这边卡了一大下   
 解决：分两次，第一次输入 8 个非0字节，然后输入 p64(0) 把 stdin_lock + 8 覆盖为 0，以防第二次 gets 卡死   
-第二次输入4字节，此时会将 stdin_lock + 4 置为 \x00 但是因为我们第一次的输入， *(int*)(stdin_lock + 4) 形如 0x61616100，所以会 -1，得到 0x616160ff 之类的数即可调用 puts leak libc 地址     
+第二次输入4字节，此时会将 stdin_lock + 4 置为 \x00 但是因为我们第一次的输入， `*(int*)(stdin_lock + 4)` 形如 0x61616100，所以会 -1，得到 0x616160ff 之类的数即可调用 puts leak libc 地址     
 然后就重入 main，写 ROP 调用 `system("/bin/sh")` 即可    
 值得一提的是，为什么 main 调用 gets 不会有卡死的问题，因为写入的 libc 固定偏移地址是 `__readfsqword(0x10u)` 然后会卡死的条件是 `(!_libc_single_threaded || v12)&&(v11 != v12)` 其中 v11 是 `__readfsqword(0x10u)` v12 是 `*(_QWORD *)(lock + 8)` 这里 `v11` 和 `v12` 是相等的，所以不会卡死    
 所以这道题反思就是不要老是想着一些偷鸡的方法解决，还是要好好逆向好好看相关函数代码qaq    

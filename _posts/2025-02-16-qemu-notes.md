@@ -1,7 +1,7 @@
 ---
-date: 2024-02-16 10:29:56
+date: 2025-02-16 10:29:56
 layout: post
-title: qemu 浅记
+title: qemu pwn 浅记
 subtitle: 
 description: >-
     Let's go, Tokyo!
@@ -355,3 +355,10 @@ int main(){
     return 0;
 }
 ```
+
+### 总结
+感觉这几个 Qemu 题都不难，和正常的用户 pwn 相比其实区别在于我们可控的范围会更少，像是相邻两次 mmio_read/write 之间，qemu-system 干了啥对我们来说其实时是非常黑盒的   
+
+并且 qemu-system 的堆布局会特别复杂，常规的 UAF/double free/堆溢出的 Hack 如果是按 how2heap 的手段打都是会非常 dirty   
+
+所以可能需要先找**能否只攻击应用数据**，之前和轩哥聊的时候，说如果是考古题/非 C/C++ 堆题也应先考虑能否只攻击应用数据     

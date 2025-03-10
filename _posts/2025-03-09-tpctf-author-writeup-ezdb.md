@@ -22,7 +22,7 @@ Rosayxy is the author of the TPCTF pwn challenge of EzDB, here is the writeup.
 ## overview
 This challenge is mainly inspired by the DB course of THU CST. Some resources of the course is [here](https://github.com/thu-db)    
 
-This challenge implements a table page to store stuff, with such basic functionaliries as creating and removing a page, creating and editing entries in the page and such.     
+This challenge implements a table page to store stuff, with such basic functionalities as creating and removing a page, creating and editing entries in the page and such.     
 
 ## vulnerability
 At function `TablePage::InsertRecord`, it checks the following condition `TablePage::GetFreeSpaceSize(this) < (unsigned __int64)(Size + 4LL)`, whereas the `TablePage::GetFreeSpaceSize` is defined as below   

@@ -62,7 +62,7 @@ The TablePage object's page_, lower_, upper_ pointers are all heap addresses. We
 
 ## exploit
 ### convert to arbituary write
-We can convert a heap-arbituary-write primitive to an arbituary-write primitive by editing the upper_ pointer of a TablePage object to an arbituary address plus some offset. Then we can use `TablePage::InsertRecord` function to write the content to the arbituary address.    
+We can convert a heap-arbituary-write primitive to an arbituary-write primitive by editing the upper_ pointer of a TablePage object at a higher heap address. We edit the high_ pointer to an arbituary address plus some offset. Then we can call `TablePage::InsertRecord` function of that TablePage object to write the content to the arbituary address.    
 
 ### FSOP
 Because it is glibc-2.35, we choose to write _IO_list_all to a heap address and construct a fake IO_file object at the address.     

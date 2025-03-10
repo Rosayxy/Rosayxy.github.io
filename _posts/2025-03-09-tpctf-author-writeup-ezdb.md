@@ -4,7 +4,7 @@ layout: post
 title: TPCTF 2025 EzDB Author's Writeup
 subtitle: 
 description: >-
-    Had given an arbituary write primitive... So be satisfied, not a difficult problem
+    Had given an arbitrary write primitive... So be satisfied, not a difficult problem
 image: >-
   /assets/img/uploads/rainy_street.jpg
 optimized_image: >-
@@ -61,8 +61,8 @@ We can stuff 7 pages into tcache bin first, when we free the 8th page, it goes i
 The TablePage object's page_, lower_, upper_ pointers are all heap addresses. We can leak the heap base address here.    
 
 ## exploit
-### convert to arbituary write
-We can convert a heap-arbituary-write primitive to an arbituary-write primitive by editing the upper_ pointer of a TablePage object at a higher heap address. We edit the upper_ pointer to an arbituary address plus some offset. Then we can call `TablePage::InsertRecord` function of that TablePage object to write the content to the arbituary address.    
+### convert to arbitrary write
+We can convert a heap-arbitrary-write primitive to an arbitrary-write primitive by editing the upper_ pointer of a TablePage object at a higher heap address. We edit the upper_ pointer to an arbitrary address plus some offset. Then we can call `TablePage::InsertRecord` function of that TablePage object to write the content to the arbitrary address.    
 
 ### FSOP
 Because it is glibc-2.35, we choose to write _IO_list_all to a heap address and construct a fake IO_file object at the address.     

@@ -92,7 +92,7 @@ if ( array_buf )
    operator delete[](array_buf);
 ```
 这个 gadget 以后也可以 mark 一下，特别巧是因为利用栈的错位导致了栈上结构的覆写，当然，这个也是需要栈上用 rsp 寻址，如果用 rbp 寻址的话 这个方法可能就 gg 了     
-以及想到了 TSG CTF 的 piercing misty mountain 劫持 rbp，利用 read 的时候用 rbp 寻址，来做到向 bss 段读入 ropchain 的操作，感觉有点异曲同工 ~     
+以及想到了 [TSG CTF 的 piercing misty mountain](https://rosayxy.github.io/writeups/) 劫持 rbp，利用 read 的时候用 rbp 寻址，来做到向 bss 段读入 ropchain 的操作，感觉有点异曲同工 ~     
 
 ## exp
 ```py

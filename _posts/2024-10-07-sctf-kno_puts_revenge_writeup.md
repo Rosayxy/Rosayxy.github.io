@@ -22,6 +22,42 @@ author: rosayxy
 paginate: true
 ---
 # 2024 sctf kno_puts(revenge) writeup
+
+## 写在前面
+这篇博客一开始是笔者学习 linux kernel pwn + 给校赛（THUCTF 2024）出 race condition 题目时，对于攻击思路的一点个人理解，后感觉这篇写的不错而且较为浅显，所以投稿了 weekly9     
+
+考虑到本文读者可能大多不是专业的 ctfer（当然笔者也不是），还请各位以 “对 linux 系统驱动的攻击思路初探中的一些个人见解”，“介绍一点攻击中可能用到的有趣机制”的视角看本文，并请忽略其中一些过于细节的地方，比如题目的一些功能和具体是啥比赛并不重要 ~     
+
+并且因为比赛的时间限制，经常会 disable 掉一些 realworld 中的防护，所以可能本题利用思路只是在非常理想化的情况下适用，而并不 realworld （就像用户态栈会有 canary 防护，所以 default 情况下栈溢出并不能劫持控制流一样）  
+
+## 背景浅介
+### ctf 向的 linux kernel pwn
+无论是 linux，Windows，还是 MacOs，系统驱动都是很常见的攻击面，原因在于运行的权限较高，有和多种内核模块通信的功能，且开发人员水平参差不齐（特别是一些第三方驱动）    
+
+而从攻击者的视角想一下，如果在驱动中发现了一个漏洞，他们会希望做什么？嗯，最初步的肯定是搞一个 crash，但是这样的话，确实用户用不了，但是攻击者也无法进一步操作，比如提取敏感信息之类的。接下来肯定就是提权了，当把权限从普通用户提升到 root，就明显会拥有更大的操作空间，如在被劫持系统上安装恶意软件等，而这就是我们在 linux kernel pwn 中想要达到的目的     
+
+而在比赛中，for obvious reasons，一般肯定不会让我们挖现有厂商的驱动漏洞（毕竟很多 real world 向的漏挖需要更自动化的手段和更长的时间，挖出来的漏洞也很多不具备提权的条件），所以一般题目 author 会手写一个有漏洞的第三方驱动，由 linux kernel 加载，然后让我们去攻击并且达到提权的效果     
+
+我们交互一般是写一个用户态的二进制程序，主要通过 ioctl syscall 和该驱动交互，调用该驱动的派发函数完成一些具体功能，并且触发漏洞。事实上 ioctl 也是操作系统上用户态程序和驱动交互的重要形式     
+
+### UAF
+Use After Free 漏洞无论在用户态还是内核都很常见，这是一种堆漏洞，具体来说，当我们有一个指向已经被 free 内存的指针（dangling pointer），并且可以改这个已释放内存的内容的时候，就会出现问题      
+
+对于 glibc 的堆的实现，用户态的利用思路很多是改 fd,bk 指针，从而破坏堆链表的结构，而内核态的堆并没有 glibc 中堆的这些复杂结构体，所以很多情况下，我们会堆喷一些其他的内核结构，然后让它占住我们释放 block 的空间，再修改这个内核结构的域，从而达到内核关键信息泄露（比如用来 bypass kaslr 之类的）或者控制流劫持     
+
+### stack pivoting
+
+回想用户态的 ROP，一般会有一段 ROP chain，而内核态的 ROP chain 会比较长，但是在上述 UAF 利用的情况下，我们可能只能控制一个函数指针，那这种情况下，如果要打 ROP 该怎么办呢？    
+
+栈迁移的思路是，我们用一个特殊的 gadget 先改 rsp 寄存器到一个我们可以控制的地方，并预先在这个地方上写下我们的 ROP chain     
+
+我们回想正常的 ROP 的思路，是不断的以我们 gadget 为返回地址，跳转过去执行，再从 gadget 返回执行栈上更高地址处的下一个 gadget 的过程    
+
+而 stack pivoting 则是通过一个 gadget 改 rsp，这样接下来的返回地址会在劫持到的 rsp 的位置找，从而会执行“预先在这个地方上写下我们的 ROP chain” 的思路     
+
+
+## 正文
+
 题目在 [这里](https://github.com/sajjadium/ctf-archives/tree/main/ctfs/SCTF/2024/pwn/kno_puts_revenge)    
 这个题赛场上看了 hi 久，卡死在如何把 payload 发到内核堆的地方，后来看了 writeup 才发现是用的 race condition 调用的 userfaultfd， 而这玩意我还没学到，，遂通过打这道题学了一下，并加深了 race condition 的理解    
 
@@ -34,7 +70,7 @@ write 函数 copy_from_user 没加锁，导致可以 race condition
 
 ## race condition 利用思路
 ### race condition 回顾
-credit to 轩哥，在校赛出题的时候帮忙理清了 race condition 的思路和要点，简记如下
+credit to 轩哥（github@xuanxuanblingbling），在校赛出题的时候帮忙理清了 race condition 的思路和要点，简记如下
 - 产生：
   - 多个线程/进程存在共享对象，就像是内核里面的一些全局的对象
   - 对共享对象的访问没加锁
@@ -70,15 +106,18 @@ credit to 轩哥，在校赛出题的时候帮忙理清了 race condition 的思
 可以偷鸡：通过 /sys/kernel/notes 读取 notes 段的地址，减去偏移得到基地址
 见 [这里](https://lwn.net/Articles/962782/)     
 看这个发布的时间 感觉旧一点的内核版本应该都可以冲一下的        
+
 ### exploit
 利用 UAF 去打 pipe_buffer 劫持 pipe_operations 的 release function pointer 为栈迁移 gadget 然后打 ROP get shell    
 
 ## 栈迁移
 在写利用的时候，主要卡在了两个点上，一个是用户态访问内核态内存会出 page fault，然后把 pipe_operations 劫持为一个用户态地址也会segfault；还有一个是找了 n 久栈迁移 gadget
+
 ### 栈迁移思路
 首先，我们只能劫持一个函数指针，而内核态又没有我们的 one_gadget，栈迁移是必然思路    
 而找栈迁移 gadget 的时候，其实和用户态的思路基本一致，只是用户态有些套路的 gadget 比如 setcontext + 61 之类的。具体来说，我们首先看**调用到函数指针的时候，哪些寄存器我们可控**，再寻找 `mov rsp, reg; ret;` 的 gadget      
 此时，我们发现 release 函数调用的时候，rsi 指向了 pipe_buffer 首地址，然后找到了 `push rsi; pop rsp; ... ; ret;` 的 gadget，就可以完成栈迁移了     
+
 ## 完整 exp
 ```c
 #include <stdlib.h>

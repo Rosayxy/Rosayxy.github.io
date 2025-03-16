@@ -66,7 +66,7 @@ kaslr，smep，smap 全开，内核版本 5.4
 白给内核堆地址
 ## 漏洞点
 ![alt_text](/assets/img/uploads/module_write.png)    
-write 函数 copy_from_user 没加锁，导致可以 race condition     
+ptr 是驱动中的全局变量，write 函数 copy_from_user 访问该全局变量没加锁，导致可以 race condition     
 
 ## race condition 利用思路
 ### race condition 回顾
@@ -99,7 +99,7 @@ credit to 轩哥（github@xuanxuanblingbling），在校赛出题的时候帮忙
     - 而如果我们事先注册了这个 userfaultfd 的话，就会调用我们的 handler，而我们可以在 handler 里面**整各种花活**，比如把copy_to 的内核堆地址 free 掉，然后再用 pipe_buffer/tty_struct 这些内核结构体申请出来
     - 然而，可能会有一个问题，uaf 的要点是我们可以控制往 freed mem 里面写的值，但是既然我们的 userbuffer 是未被初始化的，所以我们的写就无效了
     - **没关系！** userfaultfd 非常贴心的整了一个 ioctl，我们在 handler 里面，可以往这个出现 page_fault 的内存写入自定义内容，就完美解决啦！
-    - 总的来说，感觉这玩意就是个 ctf 圣体（逃
+    - 总的来说，Userfaultfd 的主要作用就是**给我们控制 race condition 中时间窗口的能力**，让我们能够**把一个 race condition 的漏洞原语变成 UAF 原语**
 
 ## 后续思路
 ### kernel base leak

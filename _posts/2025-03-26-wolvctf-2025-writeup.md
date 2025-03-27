@@ -1,10 +1,10 @@
 ---
 date: 2025-03-26 10:21:56
 layout: post
-title: 
-subtitle: linux bpf pwn 入门浅析
+title: Wolvctf 2025 Writeup
+subtitle: 
 description: >-
-    After hijacking the control flow...
+    可以 mark 一下那个 shellcode 题
 image: >-
   /assets/img/uploads/cherry-blossom.jpg
 optimized_image: >-
@@ -229,11 +229,13 @@ void check_shellcode(char* buf, int len){
 	return;
 }
 ```
-这种情况感觉应该是分段写 shellcode    
+这种情况感觉是分段写 shellcode，得先发一个满足 encoding 条件的 read shellcode_part2 assembly 过去    
 
-日常不想打 shellcode 题，试了一下，没搞出来，遂放弃，看了 discord 上的 writeup    
+日常不想打 shellcode 题，试了一下，没搞出来，遂放弃，看了 discord 上的 writeup，用到的这些指令都可以 mark 一下    
 
-credit to ElChals@Discord 如有侵权，请通过邮箱联系我删除    
+此外，找到一个轮子 [SynesthesiaYS](https://github.com/RolfRolles/SynesthesiaYS) 可以自动化求解满足一定 encoding 约束的 shellcode，感觉之后可以试试，虽然感觉可用性可能不太高    
+
+以下 exp credit to ElChals@Discord ，**如有侵权，请通过[邮箱](rosaxinyu@gmail.com)联系我删除**    
 
 ### exp
 
@@ -252,10 +254,10 @@ mov ch,0x16
 lea edi,[rax]     
 ''')
 
-gdb.attach(p,'''
-b *0x0401440
-''')
-pause()
+# gdb.attach(p,'''
+# b *0x0401440
+# ''')
+# pause()
 # 调用到 shellcode 的时候，rdx 为 0 rsi 为0 rdi 和 rax 相等为我们 shellcode 地址
 # 需求：rax rdi 清零，rsi 指向 shellcode 地址加减偏移，rdx 大于等于读入长度
 

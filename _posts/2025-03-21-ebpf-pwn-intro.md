@@ -1,7 +1,7 @@
 ---
 date: 2025-03-21 10:21:56
 layout: post
-title: 
+title: 虚拟机题但是内核版
 subtitle: linux bpf pwn 入门浅析
 description: >-
     After hijacking the control flow...

@@ -234,6 +234,9 @@ void check_shellcode(char* buf, int len){
 日常不想打 shellcode 题，试了一下，没搞出来，遂放弃，看了 discord 上的 writeup，用到的这些指令都可以 mark 一下    
 
 此外，找到一个轮子 [SynesthesiaYS](https://github.com/RolfRolles/SynesthesiaYS) 可以自动化求解满足一定 encoding 约束的 shellcode，感觉之后可以试试，虽然感觉可用性可能不太高    
+以及从轮子的 [slides](https://static1.squarespace.com/static/53a64cc2e4b0c63fc41a3320/t/582238c9e6f2e15bc0f95323/1478637785754/Synesthesia-SlidesWithNotes.pdf) 找到了一个好玩东西    
+
+![alt_text](/assets/img/uploads/set_rax_to_zero.png)
 
 以下 exp credit to ElChals@Discord ，**如有侵权，请通过[邮箱](rosaxinyu@gmail.com)联系我删除**    
 

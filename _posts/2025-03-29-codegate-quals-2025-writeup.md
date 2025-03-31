@@ -25,11 +25,20 @@ The vulnerable function is as below
 
 ![alt_text](/assets/img/uploads/vuln_create.png)   
 
-The intended vulnerability is that, if you let's say, create a chunk with index 0 and size 0x100 (which will cause the program to do a 0x100 malloc), then you call the create function again with index 0 and size 0x800, then you have a heap overflow primitive, and you can use edit function to modify content outside your chunk, which is fairly easy to exploit with.    
+The structure of the chunk is as below:   
+```c
+struct Chunk{
+    void* ptr;
+    int key;
+    int size;
+}
+```
 
-However, the vulnerability that I found initially is that this malloc does not clear the chunk's fd pointer, so that if you let's say, create a 0x800-sized chunk with index 0, you can write to the fd's pointed content.     
+The intended vulnerability is that, if you let's say, create a chunk with index 0 and size 0x100 (which will cause the program to do a 0x100 malloc), then you call the create function again with index 0 and size 0x800, then for the indexed chunk, **only the size will be updated**. Then you have a heap overflow primitive, and you can use edit function to modify content outside your chunk, which is fairly easy to exploit with.    
 
-Since it is libc-2.35, the fd pointer of tcache and fastbins are all hardened. The one I could use is the fd pointer of the unsorted bin, which **points to the top chunk pointer in main arena** (which is main arena + 96 as below)   
+However, the vulnerability that I found initially is that this malloc does not clear the chunk's fd pointer, in other words, the ptr field of the newly created struct will not be zeroed upon initialization. Thus, if you, let's say, create a 0x800-sized chunk with index 0, you can write to the fd's pointed content.     
+
+Since it is libc-2.35, the fd pointer of tcache and fastbins are all hardened. The one I could use is the fd pointer of the unsorted bin, which **points to the top chunk pointer in main arena** (which is main arena + 96 as below). Therefore, the initial primitive is an main_arena overwrite, which I have never met in previous challenges before.        
 
 ![alt_text](/assets/img/uploads/main_arena.png)    
 
@@ -207,6 +216,8 @@ not a difficult problem but a bit nasty.
 The given vulnerability is a heap overflow of 15 bytes.   
 
 The leaking of the heap address is trivial, and the libc leak requires me to construct a fake big enough chunk and freeing it to put into unsorted bin.   
+
+Then we will just play FSOP with house of apple2.   
 
 Requires me 5 tcache poisoning attempts as below (so dirty!):
 1. set up the "footer" of the fake 0x460 big chunk

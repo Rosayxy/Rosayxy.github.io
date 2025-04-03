@@ -229,14 +229,15 @@ if(function_code == IOCTL){
 从而可以保证传入多个参数    
 我们把 Host OS 上 mutator 看到的一大块数据叫做 input    
 
-至于变异，mutator 虽然不知道比如说 input 0x10 的地方对应的传参是 InBufferLength，但是通过 RedQueen 的求解，如果有以下形式的代码   
+至于变异，mutator 虽然不知道比如说 input 0x10 的地方对应的传参是 InBufferLength，但是通过 RedQueen 的求解，如果在调用接口时，发现在被测 binary 中执行到了以下形式的代码   
+
 ```c
 if (InputBufferLength < 0x10){
     return 0xc0000013;
 }
 ```
 
-则 mutator 也会知道 input 0x10 offset 地方的那个 8 字节值需要大于等于 0x10，才能 explore 更深，从而按照该标准变异，从而也能达到预期效果      
+则 mutator 也会知道在被测 binary 中 input 0x10 offset 地方的那个 8 字节值需要大于等于 0x10，才能 explore 更深，从而按照该标准变异，从而也能达到预期效果      
 
 ## TODO
 阅读 kAFL 源码，有机会再写写     

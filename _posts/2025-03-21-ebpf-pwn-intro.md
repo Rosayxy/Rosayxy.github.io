@@ -47,7 +47,7 @@ verifier 查的大概是3个点：
 ## d3bpf
 
 ### 漏洞
-在 `kernel/bpf/verifier.c` 中的 `adjust_scalar_min_max_vals` 函数
+在 `kernel/bpf/verifier.c` 中的 `adjust_scalar_min_max_vals` 函数      
 [原本代码](https://elixir.bootlin.com/linux/v5.11/source/kernel/bpf/verifier.c#L6457)    
 
 ```c
@@ -480,6 +480,19 @@ int main(){
 
 ### last step!
 任意写还是要打 modprobe_path 了 ~ 主要是省事嘿嘿    
+
+### 一点交互 tips
+1. 这种条件下，触发 bpf program 的时机是每次 socket 收到 packet 时   
+2. how to get the value passed by socket    
+还是参考 [stdnoerr 师傅的博客](https://stdnoerr.github.io/writeup/2022/08/21/eBPF-exploitation-(ft.-D-3CTF-d3bpf).html)
+
+```c
+BPF_MOV64_REG(BPF_REG_6, BPF_REG_1)
+BPF_LD_ABS(BPF_B, 0) // load socket value from r6
+BPF_MOV64_REG(BPF_REG_9, BPF_REG_0) // decide bit for arb_read or arb_write
+BPF_JMP_IMM(BPF_JEQ, BPF_REG_9, 1, 4)
+```
+这段大概就是从 context buffer 里面读入 socket 传入的值，然后判断是否为 1 来跳转    
 
 ### exp
 这个 exp 可以成功写 modprobe_path 但是会 segfault 我们要手动执行一波 get_flag 里面的命令才行    
@@ -968,4 +981,4 @@ int main() {
 ![alt_text](/assets/img/uploads/bpf_flag.png)
 
 ### 结论
-还是要主动积极看 kernel 源码，来搞明白 how it works    
+还是要主动积极多看 kernel 源码，来搞明白 how it works    

@@ -101,6 +101,8 @@ So we do the following:
 1. overwrite next_hardened to b"aaaaaaaa", print the value above and leak the __readfsqword(0x30u) and heap address   
 2. overwrite the next_hardened pointer to point at stdout at bss segment, the content of the stdout pointer on bss segment will be seen as the data of the next node, so we can print it and get a leak of the libc base address
 3. overwrite the next_hardened pointer to point at got entry of strchr, overwrite the address with `system` function address in glibc, and the next round, we input "/bin/sh" and boom!    
+### exp
+
 ```py
 from pwn import *
 context(log_level = "debug", os = "linux")

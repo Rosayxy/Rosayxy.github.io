@@ -17,7 +17,7 @@ tags:
 author: rosayxy
 paginate: true
 ---
-Played this ctf with blue-lotus teamates, done 4/5 of the pwn challenges (actually speed pwn challenges lol), finished the not solved pwn challenge today, and had a great time!   
+Played this ctf with blue-lotus teammates, done 4/5 of the pwn challenges (actually speed pwn challenges lol), finished the not solved pwn challenge today, and had a great time!   
 
 Here are the writeups
 
@@ -58,6 +58,11 @@ bl        system
 Also, when returning from the `main` function, r31 is loaded from `-4(r11)` so that we can control the value of r31     
 At first, I plan to put "/bin/sh" addr on stack and point r31 to it, but it will require an additional stack leak, which is quite nasty.  
 Then I rubber-duck-debugged the problem with my awesome boyfriend jiegec. I checked the cross reference to the address of "/bin/sh" and found a pointer in got segment that points to it.    
+
+
+![alt_text](/assets/img/uploads/binshell.png)
+
+
 We control the r31 reg to the got pointer minus 8, and the problem is solved    
 
 ```py
@@ -75,6 +80,8 @@ binary_path = "./sp33d1"
 p = remote("sp33d.play.hfsc.tf", 20020)  
 elf = ELF("./sp33d1")
 
+# why we have to send p32(system_addr)*2 is that the p32(0x100BEF20) is at r11 - 4 and the return address is at r11 + 4
+# just like how it works in x86_64
 payload = b"a"*0x14 + p32(0x100BEF20) + p32(system_addr)*2
 
 p.recvuntil("pwn: ")
@@ -177,7 +184,7 @@ p.interactive()
 This is a fairly easy challenge, but my ida got confused when determining the address of the read on stack, so I spent a lot of time just to figure out how to cover the next pointer before realizing that I can overwrite it directly.    
 
 ## sp33d3
-an easy problem, the heap addresses are given, and we have arbituary address read and write.   
+an easy problem, the heap addresses are given, and we have arbitrary address read and write.   
 Thus, the solution is to leak libc through unsorted bin, overwrite IO_list_all to a heap address, construct a fake IO_file on this address with the tactic of [house of apple2](https://bbs.kanxue.com/thread-273832.htm) and get the shell!!
 
 ```py
@@ -265,11 +272,11 @@ p.interactive()
 First time solving a kernel pwn challenge in a CTF, and it was quite fun!   
 Collaborated it with blingbling (thanks for saving me!!).    
 
-This challenge implements a new syscall: sys_pwn and it offers an arbituary_write_random_number primitive. Also, the random number's lower 32 bits are returned to the user as the return value of the syscall.      
+This challenge implements a new syscall: sys_pwn and it offers an arbitrary_write_random_number primitive. Also, the random number's lower 32 bits are returned to the user as the return value of the syscall.      
 
 At first, I thought about overwriting some size of a struct to a large number, but it will require a kernel heap leak or such.   
 
-Then blingbling and I thought about brute-forcing writing the modprobe_path to "/home/user/x" bit by bit (this can be done because the random number's lower 32 bits are returned to the user), and then trigger the modprobe_path to be executed.    
+Then blingbling and I thought about brute-forcing writing the modprobe_path to "/home/user/x" byte by byte (this can be done because the random number's lower 32 bits are returned to the user), and then trigger the modprobe_path to be executed.    
 
 Also some fun usages of modprobe_path:   
 - https://docs.kernel.org/admin-guide/sysctl/kernel.html#modprobe
@@ -314,16 +321,17 @@ Then to upload the exploit to remote, I used the same method as the one in [this
 
 
 ## sp33d5
-The program is a statically-linked The program has a stack overflow and data overflow. At first, I tried to data overflow into the stderr structure on data segment and use the same method as [house of apple2](https://bbs.kanxue.com/thread-273832.htm). However, the program doesn't link a system function, and we don't have good stack pivoting gadgets.    
+The program is a statically-linked arm32 program. It has a stack overflow and data overflow. At first, I tried to data overflow into the stderr structure on data segment and use the same method as [house of apple2](https://bbs.kanxue.com/thread-273832.htm). However, the program doesn't link a system function, and we don't have good stack pivoting gadgets.    
 
-Working with teamate k4ra5u, we tried stack overflow, but it will cover the pointer on stack, which determines where to write the next number.   
+Working with teammate k4ra5u, we tried stack overflow, but it will cover the pointer on stack, which determines where to write the next number.   
 
 Then we were stuck until the end of the CTF. sad  
 Afterwards, we checkout the messages on discord, and found that we can bruteforce the stack address on remote!! The stack address is the same on every run locally, so my best guess is that it has something to do with the implementation of qemu-arm, being different with the version and such. Also this is a 32-bit program, so the cost of bruteforcing is not that high.     
 
 When I was constructing the rop payload, I found it hard to find a "syscall" gadget. I asked k4ra5u for it, and he gave the tip of adding `--thumb` to the ROPgadget command. I was like "wow, I didn't know that".    
 
-Also encountered a problem when using the gadget `0x00019b10 : pop {r0, r1, r2, ip, sp, pc}`, it will give me a sigkill signal at the 0x00019b10, and the regs are all not pop-ed to their new values. Haven't figured out why yet. :(    
+Also encountered a problem when using the gadget `0x00019b10 : pop {r0, r1, r2, ip, sp, pc}`, it will give me a sigkill signal at the 0x00019b10, and the regs are all not pop-ed to their new values.    
+[this documentation](https://developer.arm.com/documentation/dui0489/e/arm-and-thumb-instructions/memory-access-instructions/push-and-pop) says that the pop instruction will not pop anything into sp so that is where the sigkill probably comes from.    
 
 Then a good thing, the r2 reg is 0 so we don't need to pop it. Thus, we can use the gadget `0x0003f114 : pop {r0, r1, pc}` which is quite nice.   
 

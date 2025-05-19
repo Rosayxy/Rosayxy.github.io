@@ -986,9 +986,6 @@ int main() {
 ### appendix
 以下为防护 spectre 的那个 bpf 代码中 how the index mask works 的介绍，credit to jiegec    
 比如说有个 index, 合法范围为 0 ~ 3，判断范围时，是用的 `if(index >= 4) return FAIL;`的方式   
-
 而如果 index 小于等于3就访问数组，但是可能因为分支预测，我们还是可以用大于等于4的index来访问数组    
-
 为了解决这个问题，可以设置 index_mask = 3, 然后 index = index & index_mask, 这样访问数组是合法范围    
-
 但是如果 index 的合法范围的长度不是2的幂次，则可能会有一点越界，但是其实问题不大，因为最后还是需要用户态通过 cache 测信道 leak，所以只要不会溢出到用户态可以 probe 的地址就也难被攻击    

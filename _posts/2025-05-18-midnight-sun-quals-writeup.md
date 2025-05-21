@@ -17,7 +17,7 @@ tags:
 author: rosayxy
 paginate: true
 ---
-Played this ctf with blue-lotus teammates, done 4/5 of the pwn challenges (actually speed pwn challenges lol), finished the not solved pwn challenge today, and had a great time!   
+Played this ctf with blue-lotus teammates, did 4/5 of the pwn challenges (actually speed pwn challenges lol), finished the not solved pwn challenge today, and had a great time!   
 
 Here are the writeups
 
@@ -38,7 +38,7 @@ int __fastcall main(int argc, const char **argv, const char **envp)
   return 0;
 }
 ```
-this gets introduces a stack overflow vuln
+this `gets` function introduces a stack overflow vuln
 
 ### debug
 As is introduced in [this ref](https://tttang.com/archive/1695/#toc__8), we start the process with `p = process(["qemu-ppc","-g","1234", binary_path]) ` command in our pwntools script, then we start a new terminal, and run the following command to attach gdb to the qemu process:
@@ -98,8 +98,8 @@ struct Node {
     struct Node *next_hardened;
 };
 ```
-Note that the `next` pointer is hardened (xor-ed with fs:0x30 and ror-ed)
-The vulnerability lies in that we can overwrite the next pointer. Moreover, the program will print such a value when it detected the next pointer is not in data or on heap.
+Note that the `next` pointer is hardened (xor-ed with fs:0x30 and ror-ed)     
+The vulnerability lies in that we can overwrite the next pointer. Moreover, the program will print such a value as below when it detects the next pointer is not in data or on heap.
 ```c
 (__readfsqword(0x30u) ^ __ROR8__(next_hardened, 17)) & 0xFFFFFFFFFFFFFFFELL
 ```
@@ -185,7 +185,7 @@ This is a fairly easy challenge, but my ida got confused when determining the ad
 
 ## sp33d3
 an easy problem, the heap addresses are given, and we have arbitrary address read and write.   
-Thus, the solution is to leak libc through unsorted bin, overwrite IO_list_all to a heap address, construct a fake IO_file on this address with the tactic of [house of apple2](https://bbs.kanxue.com/thread-273832.htm) and get the shell!!
+Thus, the solution is to leak libc base address through unsorted bin, overwrite IO_list_all to a heap address, construct a fake IO_file on this address with the tactic of [house of apple2](https://bbs.kanxue.com/thread-273832.htm) and get the shell!!
 
 ```py
 from pwn import *

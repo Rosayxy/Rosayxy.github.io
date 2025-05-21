@@ -1,7 +1,7 @@
 ---
 date: 2025-05-08 10:21:55
 layout: post
-title: A view of Tomasulo's algorithm
+title: \[Unfinished\] A view of Tomasulo's algorithm
 subtitle: from the perspective of (simulated) dataflow and control flow
 description: >-
     analysis based on the assignment of the course "Computer Architecture" in Tsinghua University
@@ -10,11 +10,10 @@ image: >-
   /assets/img/uploads/cherry-blossom.jpg
 optimized_image: >-
   /assets/img/uploads/cherry-blossom.jpg
-category: ctf
+category: half-finished
 tags:
-  - pwn
-  - linux kernel
-  - ebpf
+  - tomasulo algorithm
+  - computer architecture
 author: rosayxy
 paginate: true
 ---

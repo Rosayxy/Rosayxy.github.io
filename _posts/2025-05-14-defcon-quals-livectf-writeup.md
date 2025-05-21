@@ -1,7 +1,7 @@
 ---
 date: 2025-05-14 10:21:56
 layout: post
-title: \[Unfinished\] DEFCON Quals LiveCTF writeup
+title: \[Unfinished] DEFCON Quals LiveCTF writeup
 subtitle: 
 description: >-
     之前一直是队友做 gadget 题，导致 Rosayxy 这块非常缺乏练习，在本次比赛中尝到了血的教训

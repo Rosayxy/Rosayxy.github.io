@@ -16,6 +16,8 @@ menu:
     url: /about
   - title: Contact
     url: /contact
+  - title: Category
+    url: /category
 email: xy-yu22@mails.tsinghua.edu.cn
 # See: https://disqus.com/
 disqus_username: disqus_username

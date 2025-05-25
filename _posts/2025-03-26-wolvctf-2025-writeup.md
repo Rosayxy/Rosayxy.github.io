@@ -12,8 +12,8 @@ optimized_image: >-
 category: ctf
 tags:
   - pwn
-  - linux kernel
-  - ebpf
+  - shellcode
+  - stack virtual machine
 author: rosayxy
 paginate: true
 ---

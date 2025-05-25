@@ -17,9 +17,9 @@ tags:
 author: rosayxy
 paginate: true
 ---
-这周打比赛遇到了一个栈题，需要爆破栈地址的第二位，也就是 4 ~ 7 bits，这就引出了本人一直有点疑惑的问题：为什么栈变量的低 4 位是固定的，而不是 12 位？因为我们知道的 aslr 是以页力度对齐的，所以想知道我们 OS 在它的基础上，对栈地址又做了什么样的随机化   
+这周打比赛遇到了一个栈题，需要爆破栈地址的第二个 hex number，也就是 4 ~ 7 bits，这就引出了本人一直有点疑惑的问题：为什么栈变量的低 4 bits 是固定的，而不是 12 bits？因为我们知道的 aslr 是以页力度对齐的，所以想知道我们 OS 在它的基础上，对栈地址又做了什么样的随机化   
 在 google 上搜了一波，发现大部分说法都是只提到两点：1. aslr 2. 栈地址必须 16 字节对齐，否则会出锅，而对上述问题没有很好的回答，所以就决定自己动手试一试了        
-嗯 首先提一句，为什么栈随机化是低4位固定的，因为它要保证 16 byte 的 alignment，不然的话，像 `movaps` 这种要求栈 16 字节对齐的指令会挂掉    
+嗯 首先提一句，为什么栈随机化是低4 bit 固定的，因为它要保证 16 byte 的 alignment，不然的话，像 `movaps` 这种要求栈 16 字节对齐的指令会挂掉    
 
 ## determining the part of stack which is randomized
 
@@ -62,7 +62,7 @@ unsigned long randomize_stack_top(unsigned long stack_top)
 
 ## kernel implementation - stack randomization with 4 bits fixed
 
-那我们去找 kernel 是在哪里把栈上 environ 指针初始化的，经过一番 prompt 和搜索，找到了 [create_elf_tables](https://elixir.bootlin.com/linux/v6.6.92/source/fs/binfmt_elf.c#L156) 函数，该函数开头就调用了 [arch_align_stack](https://elixir.bootlin.com/linux/v6.6.92/source/arch/x86/kernel/process.c#L1029) 函数，而看到该函数做了我们一直在找的 4 bits 的随机化操作，代码如下：
+那我们去找 kernel 是在哪里把栈上 environ 指针初始化的，经过一番 prompt 和搜索，找到了 [create_elf_tables](https://elixir.bootlin.com/linux/v6.6.92/source/fs/binfmt_elf.c#L156) 函数，该函数开头就调用了 [arch_align_stack](https://elixir.bootlin.com/linux/v6.6.92/source/arch/x86/kernel/process.c#L1029) 函数，而看到该函数做了我们一直在找的低 4 bits 对齐的随机化操作，代码如下：
 ```c
 // https://elixir.bootlin.com/linux/v6.6.92/source/arch/x86/kernel/process.c#L1029
 unsigned long arch_align_stack(unsigned long sp)

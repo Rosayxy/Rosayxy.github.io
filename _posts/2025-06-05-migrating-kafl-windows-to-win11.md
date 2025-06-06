@@ -57,7 +57,7 @@ what's more，因为 kAFL 里面这一步拷贝和注册 service 也是用 ansib
 
 然后调试总体来说，记一下 jiegec 所说，先按照原理推测可能的原因，然后结合 log，源码来排查问题，嗯，感觉自己确实配环境的经验不够，以后还要多积累，多想多学    
 
-最后是运行 kafl 的截图，真的好帅啊哈哈，以及确实学到了很多，格外感谢 npy jiegec 教我配环境qaq     
+最后是运行 kafl 的截图，真的好帅啊哈哈，以及确实学到了很多     
 
 ![alt_text](/assets/img/uploads/kafl_ui.png)
 ![alt_text](/assets/img/uploads/kafl_output.png)

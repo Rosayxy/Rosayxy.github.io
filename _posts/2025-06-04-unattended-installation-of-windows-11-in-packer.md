@@ -6,9 +6,9 @@ subtitle:
 description: >-
     with the help of my awesome boyfriend
 image: >-
-  /assets/img/uploads/bootimg.png
+  /assets/img/uploads/boot_image.png
 optimized_image: >-
-  /assets/img/uploads/bootimg.png
+  /assets/img/uploads/boot_image.png
 category: hackedemic
 tags:
   - 配环境
@@ -52,12 +52,16 @@ OVMF 是一个开源的 UEFI 固件实现，为 QEMU 虚拟机提供了现代化
 我们参考 arch linux guide 的以下说法   
 > Another and more preferable way is to split OVMF into two files. The first one will be read-only and store the firmware executable, and the second one will be used as a writable variable store. The advantage is that you can use the firmware file directly without copying, so it will be updated automatically by pacman.
 
-> Use /usr/share/edk2/x64/OVMF_CODE.4m.fd as a first read-only pflash drive. Copy /usr/share/edk2/x64/OVMF_VARS.4m.fd, make it writable and use as a second writable pflash drive:
+> Use /usr/share/edk2/x64/OVMF_CODE.4m.fd as a first read-only pflash drive. Copy /usr/share/edk2/x64/OVMF_VARS.4m.fd, make it writable and use as a second writable pflash drive:     
+
+
 ```bash
--drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.4m.fd \
+-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.4m.fd
 -drive if=pflash,format=raw,file=/copy/of/OVMF_VARS.4m.fd
 
 ```
+
+
 我们把 `/usr/share/OVMF/OVMF_CODE_4M.fd code.img` `/usr/share/OVMF/OVMF_VARS_4M.fd efivars.img` 拷贝到当前目录下，然后使得 efivars.img 可写，然后把上面 `-drive` 的内容添加到 packer 的 windows.pkr.hcl 中的 `qemuargs` 里面就行了    
 
 ### 指定 cpu

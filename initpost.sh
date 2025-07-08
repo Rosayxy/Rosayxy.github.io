@@ -112,6 +112,7 @@ initpost_content() {
 echo "---"
 echo "date: ${CURRENT_DATE} ${TIME}"
 echo "layout: post"
+echo "comments: true"
 echo "title: \"${POST_TITLE}\""
 echo "subtitle:"
 echo "description:"

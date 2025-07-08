@@ -27,6 +27,7 @@ paginate: true
 但是感觉即使这样，Host OS 也不应该 crash 掉 orz
 
 在 "Diary of a Reverse Engineer" discord 群里描述了一下现象，发现大概的原因是 qemu 版本太老了（机子是 ubuntu20.04 + kAFL/Nyx 的 patch），qemu 对 Hyper-V 还不够兼容，如果是比如说 kvm 兼容性不能满足，kvm 挂了的话，可能整个 host 就 crash 了   
+
 具体证据是 [2022 年 Hyper-V 才被 qemu 加上支持](https://kvm-forum.qemu.org/2022/Hyper-V%202022.pdf)    
 以及查看了一下 [commit messages](https://github.com/qemu/qemu/commits?author=vittyvk)，发现大部分 commit 都是 2022 年后才有的    
 

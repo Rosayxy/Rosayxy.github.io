@@ -421,10 +421,10 @@ __int64 __fastcall main(int a1, char **a2, char **a3)
 }
 ```
 ### 漏洞
-memcpy 可用传入一个负数的 length，这个是未定义行为，调试发现 memcpy 行为如下：
+memcpy 可用传入一个负数的 length，我们这里的 length 为 memcpy 的第三个参数，这个是未定义行为，调试发现 memcpy 行为如下：
 - 先把 src[0:0x80] 拷贝到 dst[0:0x80]
-- 然后把 src -0x80 + length.rounddown(0x20) 开始的 0x80 字节拷贝到 dst + -0x80 + length.rounddown(0x20) 开始的 0x80 字节
-- 最后是 src + size - 0x20 开始拷贝 0x20 字节到 dst + size - 0x20 开始的 0x20 字节
+- 然后把 src -0x80 + length.rounddown(0x20) 开始的 0x80 字节拷贝到 dst + -0x80 + length.rounddown(0x20) 开始的 0x80 字节，其中， `length.rounddown(0x20)` 指的是 length 向下对 0x20 取整
+- 最后是 src + length - 0x20 开始拷贝 0x20 字节到 dst + length - 0x20 开始的 0x20 字节
 
 ### house of orange
 利用 “把 src[0:0x80] 拷贝到 dst[0:0x80]” 这个条件改小 top_chunk 的 size,    

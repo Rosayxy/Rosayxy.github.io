@@ -16,7 +16,7 @@ author: rosayxy
 paginate: true
 ---
 
-嗯 本来 google CTF 2025 应该是和 blue-lotus 打，但是来例假完全没有体力干活，就摆烂了，然后就是慢慢复现吧，感觉期末周到现在已经欠了一堆比赛没复现了 sigh    
+嗯 本来 google CTF 2025 应该是和 blue-lotus 打，但是完全没有体力干活，就摆烂了，然后就是慢慢复现吧，感觉期末周到现在已经欠了一堆比赛没复现了 sigh    
 可能做一道发一点博客吧，摆烂了orz   
 
 ## multiarch-2

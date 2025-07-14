@@ -243,3 +243,5 @@ int main(){
 看了 Nightu 师傅的 exp，有如下改进操作来提高 file spray 的成功率（感觉好厉害！）：
 1. 一开始对 fd 个数增加 rlimit，然后一口气打开 0x800 个 `/bin/busybox` 的 fd
 2. 通过 oob 越界读遍历该 page 后续的页，因为 file struct 的 0xb0 字段是 file_operations 函数指针，相对于 kernel 基地址固定，此处是 `FFFFFFFF82C44D40 shmem_file_operations`，我们可以将该页的 0xb0 offset 处的值 load 到虚拟机的 stack 然后读出，看哪个页上被 spray 到了 file struct，这样就有更多 spray 的准确性
+
+此外，看到了 [这篇 writeup](https://nazrinduck.github.io/2025/05/26/2025jqctf-mem/) 感觉很不错，学到啦    

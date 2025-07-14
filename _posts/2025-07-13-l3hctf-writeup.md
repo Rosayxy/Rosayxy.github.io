@@ -184,7 +184,7 @@ pwndbg> x/20gi $rebase(0x186a)
 
 所以就很自然的想到了 chunk overlapping 的构造，我们构造如下   
 ![alt_text](/assets/img/uploads/heack_revenge_heap3.jpg)
-![alt_text](/assets/img/uploads/heack_revenge_heap4.jpg)
+![alt_text](/assets/img/uploads/idx1_chunk.png)
 
 注意，堆块的内容都是在一开始 create 的时候写进去的，因为该题没有 edit 功能   
 

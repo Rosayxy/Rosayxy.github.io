@@ -322,4 +322,4 @@ p.interactive()
 2. 改 rbp 并且通过 rbp 相对寻址来做后续利用的方法，之前在 TSG CTF 也见过一次，详情见 [这个 writeup](https://rosayxy.github.io/writeups/#piercing-misty-mountain---tsg-ctf-2024)   
 
 ## Library
-现在卡题了，在蹲其他师傅放 writeup
+现在卡题了，在蹲其他师傅放 writeup  

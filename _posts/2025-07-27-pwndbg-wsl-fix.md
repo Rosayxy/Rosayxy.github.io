@@ -18,12 +18,18 @@ paginate: true
 ---
 在先后换到 alienware 的两台笔记本后，都遇到一个问题：直接启动 gdb 和用 pwntools 里面 `gdb.attach(process)` 的时候，pwndbg 启动都会很慢，大概启动一次需要将近一分钟，之前一直不觉得是个问题，因为大部分比赛的瓶颈并不是调试，而是思维跟不上，出现卡题，所以就一直将就着，但是这周末打京东的比赛的时候，确实有点被烦到了，就决定彻底解决一下这个问题
 
+嗯，首先确认该问题和笔记本性能无关，alienware m16 的 Utra9 185H 还是挺强的 doge
+
 ## profiling
 pwndbg 自带 profiling 的功能，设置方法为 `export PWNDBG_PROFILE=1`，这是基于的 python 的 [cProfile](https://docs.python.org/3/library/profile.html)，然后它就会去记录每个功能的用时，跑出来的结果存在一个 pstat 文件中，可以用 [SnakeViz](https://jiffyclub.github.io/snakeviz/) 来可视化，得到如下结果
 
 ![alt_text](/assets/img/uploads/snakeviz.png)
 
-可以看到，最耗时的是 importlib 的过程，搜索可知，python 的 import 主要是从 system path 里面找 modules 和做 name binding 的过程，所以比较**I/O 密集型**，而在 /mnt 和 linux 的原生目录之间通信是通过网络的，对于这种 I/O 密集型的操作来说就会很慢，**而这也成为了整个加载过程的瓶颈**
+可以看到，最耗时的是 importlib 的过程，搜索可知，python 的 import 主要是从 system path 里面找 modules 和做 name binding 的过程，所以比较**I/O 密集型**
+
+而 Windows 被挂载到 /mnt 目录下，Windows 上的文件和 linux 的互相访问是通过 [9p protocol](https://en.wikipedia.org/wiki/9P_(protocol))，virtio-plan9 或者 virtiofs，见 [wsl 文档](https://wsl.dev/technical-documentation/drvfs/)，所以实际上走的是网络或 virtio，对于这种 I/O 密集型的操作来说就会很慢，**而这也成为了整个加载过程的瓶颈**
+
+此外，wsl2 慢的问题是臭名昭著，见 https://github.com/microsoft/WSL/issues/4197
 
 ## solution
 我们就需要把 pwndbg 装到 linux 目录下，这样就不用通过网络通信了，而整个需要我们去重新安装一遍 `pwndbg`，按照 [文档](https://pwndbg.re/pwndbg/latest/setup/) 上的方法，`curl -qsL 'https://install.pwndbg.re' | sh -s -- -t pwndbg-gdb`，然后我们在 `.gdbinit` 里面把原本的 `source /mnt/somepath/gdbinit.py` 注释掉，否则相当于启动 pwndbg 的时候又在 gdbinit 里面 load 了一遍 pwndbg，注释掉就可以正常启动 `pwndbg` 命令了

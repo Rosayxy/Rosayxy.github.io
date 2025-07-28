@@ -47,7 +47,9 @@ sudo ln -s /usr/local/bin/pwndbg /usr/local/bin/pwntools-gdb
 ```
 其中 pwndbg 用 `curl -qsL 'https://install.pwndbg.re' | sh -s -- -t pwndbg-gdb` 安装的默认位置就是 `/usr/local/bin/pwndbg`，可以用 `which pwndbg` 来查看
 
-然后启动 pwntools，里面 gdb.attach 的时候就会通过 pwntools-gdb 找到我们的 pwndbg 然后启动
+然后启动 pwntools，里面 gdb.attach 的时候就会通过 pwntools-gdb 找到我们的 pwndbg 然后启动，成果如下
+
+![alt_text](/assets/img/uploads/pwntools_gdb.png)
 
 注意，如果直接改 `.gdbinit` 里面 source 文件的位置的话，会遇到 `import pwndbg` 的 module not found error，这是因为它 pwndbg 除了 gdbinit 之前，还是加载了虚拟环境之类的，所以一上来就跑 `gdbinit` 会报错
 

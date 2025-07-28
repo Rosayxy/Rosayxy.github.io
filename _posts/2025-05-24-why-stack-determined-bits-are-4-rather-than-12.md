@@ -117,7 +117,7 @@ unsigned long arch_align_stack(unsigned long sp)
 
 然后为什么做这步，其实初始的想法是进一步增强栈的安全性，因为栈溢出漏洞通常来说，利用难度还是比堆漏洞低一些的   
 
-但是看 [注释](https://elixir.bootlin.com/linux/v6.6.92/source/fs/binfmt_elf.c#L178) 里出现了这个，应该是为了防止并行等情况下，过于频繁访问同一个 L1 cache 的 cache line，导致该 cache line 被频繁换入换出造成的开销   
+但是看 [注释](https://elixir.bootlin.com/linux/v6.6.92/source/fs/binfmt_elf.c#L178) 里出现了这个，所以感觉原因不完全是安全问题，另一个考虑的因素应该是为了防止并行等情况下，过于频繁访问同一个 L1 cache 的 cache line，导致该 cache line 被频繁换入换出造成的开销   
 > In some cases (e.g. Hyper-Threading), we want to avoid L1 evictions by the processes running on the same package. One thing we can do is to shuffle the initial stack for them.
 
 顺手看了一下，把环境变量字符串放到栈上的函数在比较前的地方，是被 `kernel_execve` 函数中的 `copy_strings_kernel(bprm->envc, envp, bprm)` 做的，在比较前面的地方，所以必然在咱们 create_elf_tables 函数前   

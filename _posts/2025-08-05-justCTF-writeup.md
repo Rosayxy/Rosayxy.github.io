@@ -359,6 +359,8 @@ p.interactive()
 
 ## prospector
 
+I solved it locally on my 5.15.167.4-microsoft-standard-WSL2 machine so the mmap offsets might be different from that on remote lol
+
 A stack challenge. The only fun thing is that the address to leak is the mmaped address, and we can calculate the base of the linker. All of the gadgets we need are in the linker.
 
 When debugging the rop chain, the problem I encountered is as follows. I want to call the sys_execve, and the rdi, rsi, rdx arguments each stands for file name, argv and envp respectively. At first, I passed the pointer to the string "/bin/sh" as argv, but it results in EFAULT at sys_execve.

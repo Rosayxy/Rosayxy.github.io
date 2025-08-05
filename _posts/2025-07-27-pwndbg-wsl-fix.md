@@ -1,7 +1,7 @@
 ---
 date: 2025-07-27 10:21:59
 layout: post
-title: 解决 pwbdbg gdb wrapper 在 wsl2 上启动过慢的问题
+title: 解决 pwndbg gdb wrapper 在 wsl2 上启动过慢的问题
 subtitle: 
 description: >-
     血的教训：所有软件在 wsl 下安装都不应该装在 /mnt 目录下...

@@ -19,7 +19,7 @@ author: rosayxy
 paginate: true
 ---
 
-之前拜读过煜博和保证哥关于 Defcon 参赛经历的博客（[煜博的博客](https://brieflyx.me/2021/dc29-memo/)，[保证哥的博客](https://iromise.com/2021/08/11/DEF-CON-CTF-29-Final/)），现在终于我也可以写了吼吼！但是和这两位学长不同，因为我是第一年 Defcon，并没有参与统筹和出谋划策，这篇更多是以一个 Defcon 萌新的视角简单写一下自己的参赛经历，记一个流水账 ~
+之前拜读过煜博和保证哥关于 Defcon 参赛经历的博客（[煜博的博客](https://brieflyx.me/2021/dc29-memo/)，[保证哥的博客](https://iromise.com/2021/08/11/DEF-CON-CTF-29-Final/)），现在终于我也可以写了吼吼！但是和两位学长不同，我是第一年 Defcon，并没有参与统筹和出谋划策，这篇更多是以一个 Defcon 萌新的视角简单写一下自己的参赛经历，记一个流水账 ~
 
 总体情况：作为 blue water 的一员打的 Defcon Final，最终获得了第二名
 
@@ -77,7 +77,7 @@ Redbud 这边主要是 ouuan, LZDQ, mori, papersnake 和我在看题，TD 的人
 
 当时的我，UDP，KevinStevins 还有 hugeh0ge 都在找内存洞，更具体的话，因为逆向量比较大，所以主要是先逆完的 hugeh0ge 在把所有可能的漏洞点扔到 discord channel 里，其他几个人写 exp 来调试验证。搞了挺久之后大家达成共识：好像并没有内存漏洞....
 
-这个题输入是一个音频文件，解码成文字用的是 [whisper](https://huggingface.co/docs/transformers/en/model_doc/whisper)，是一个 AI 的语音识别模型，看到师傅们遇到的一个问题是 LLM 会进行一些语句补全之类的推测，所以我们的音频可能会被补全成奇怪的内容，看到了队友 finetune 了音量，加噪声等一些方法来
+这个题输入是一个音频文件，解码成文字用的是 [whisper](https://huggingface.co/docs/transformers/en/model_doc/whisper)，是一个 AI 的语音识别模型，看到师傅们遇到的一个问题是 LLM 会进行一些语句补全之类的推测，所以我们的音频可能会被补全成奇怪的内容，看到了队友 finetune 了音量，加噪声等一些方法来解决
 
 然后 patch 主要是在一个 `filter.txt` 里面写东西，我的理解是滤波器的参数，指定滤波的类型（高通，低通，带通这种）和频率范围来滤波，可能可以比如说，把人耳能听到的频率范围给过滤掉，从而不会被 whisper 识别出来
 
@@ -140,7 +140,7 @@ nilu 的话，静态链接去符号表，看着就头大，而且涉及到数据
 
 这个时候已经晚上 10 点多了，f1yyy 说想打那个 `Raphael` 的任意地址写，但是可能不太熟悉新版本堆的攻击技巧，于是我就决定一起看看
 
-这个题目的难点是无法读到堆上的内容，但是给了输出 pointer 的低4字节的方法，以及实现了一个 hashmap，有从 hashmap 查询或者输入数据的能力，通过低4字节 leak 堆地址的低位是简单的，但是 libc leak 低4字节有点难，我想到了 malloc 一个足够大的堆块的时候会使用 mmap 分配，得到的地址和 libc 偏移是固定的，所以由此，我们基本获得了**在一定爆破概率下的任意地址写**，此外 mmap 分配大堆块这个点后续也在 patch 的时候用到了，所以确实可以 mark 一下
+这个题目的难点是无法读到堆上的内容，但是给了输出 pointer 的低4字节的方法，以及实现了一个 hashmap，在堆上分配的内存，有从 hashmap 查询或者输入数据的能力，通过低4字节 leak 堆地址的低位是简单的，但是 libc leak 低4字节有点难，我想到了 malloc 一个足够大的堆块的时候会使用 mmap 分配，得到的地址和 libc 偏移是固定的，所以由此，我们基本获得了**在一定爆破概率下的任意地址写**，此外 mmap 分配大堆块这个点后续也在 patch 的时候用到了，所以确实可以 mark 一下
 
 首先这个题没有触发 IO 流的方法，甚至没有输出输入函数，我们不能打 FSOP，然后 Full Relro, libc 也是 Full Relro，所以只能用最传统的方法：劫持栈上返回地址
 
@@ -257,6 +257,7 @@ april 逆向的队友 szk3y 可以在一个 rwx 的 mmap 空间里面写 shellco
 
 #### get flag!
 最后队友成功拿到本题 flag! 好耶！
+
 其中有个有意思的 bug 是中途发现很奇怪的事情：在读写 shellcode `sub r15, r15 0x6654` 的时候，会莫名 sigkill，喊了刘大爷来 debug 然后发现被编码成了比正常汇编都要长的一份有点怪的东西
 
 ![alt_text](/assets/img/uploads/shellcode.png)
@@ -268,12 +269,14 @@ april 逆向的队友 szk3y 可以在一个 rwx 的 mmap 空间里面写 shellco
 
 第一个小时主要是在修这个题的 patch，这个 patch 是提交一个可以 build 出 image 的环境：Dockerfile 和那几个 patch 过的文件
 
-大家发现不对劲的地方：只要 Dockerfile 出现 COPY，哪怕是 copy 一样的 binary 都会被打回来，于是考虑权限问题，发现**应该只给 owner +x 的权限**，改正后就好了
+大家发现不对劲的地方：只要 Dockerfile 出现 COPY，哪怕是 copy 一样的 binary 都会被打回来，于是考虑权限问题，发现**应该只给 owner +x 的权限**，不给普通用户组，改正后就好了
 
 #### april？
 发现竟然有人打 april??
 
-于是根据它的输入序列写脚本拿 flag，再最后一轮前写完脚本，但是因为过于匆忙，其中有一步是要把脚本前面加上一个轮询看 connection 为多少的一步，如果 connection 不为 4 就直接 return
+啊？
+
+于是根据它的输入序列写脚本拿 flag，在最后一轮前写完脚本，但是因为过于匆忙，其中有一步是要把脚本前面加上一个轮询看 connection 为多少的一步，如果 connection 不为 4 就直接 return
 
 加完之后，没注意到改了脚本中 process 的名字，导致 payload 发不出去，是非常低级的错误....
 

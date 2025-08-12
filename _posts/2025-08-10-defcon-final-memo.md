@@ -61,7 +61,7 @@ liveCTF 的讲解在 youtube 上有，见 [这里](https://www.youtube.com/@live
 
 ### 队员
 
-队员大部分来自 Perfect Blue, Water Paddler, samsung, r00timentary, undef1ned，Tea Delivers (后文可能简称 TD)，和 Redbud 这几个战队
+队员大部分来自 Perfect Blue, Water Paddler, samsung, r00timentary, undef1ned，Tea Deliverers (后文可能简称 TD)，和 Redbud 这几个战队
 
 Redbud 这边主要是 ouuan, LZDQ, mori, papersnake 和我在看题，TD 的人里面看到了熟悉的保证哥，zTrix 和 f1yyy
 

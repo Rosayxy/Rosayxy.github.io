@@ -2,13 +2,13 @@
 date: 2025-08-10 10:21:59
 layout: post
 title: pwning thru the night
-subtitle: nailing down pwn challenges in nullcon (but only after the challenges ended)
+subtitle: nailing down pwn challenges in nullcon 2025 (but only after the challenges ended)
 description: >-
     first time playing solo with my awesome bf xd
 image: >-
-  /assets/img/uploads/wakatime.png
+  /assets/img/uploads/silver_wolf_warp.png
 optimized_image: >-
-  /assets/img/uploads/wakatime.png
+  /assets/img/uploads/silver_wolf_warp.png
 category: ctf
 tags:
   - heap challenges
@@ -19,14 +19,10 @@ paginate: true
 
 This Thursday, my bf was playing the nullcon HackIM CTF solo as team jiegec and I decided to take a look too. However, I have *professional practice* during the day (which is like being an intern in a company), so I could only play at night. I did the `fotispy1` challenge, got stuck on `fotispy2` challenge and went to bed. I wasn't avail for the next day either, and when the CTF ended, I was a bit angry at myself, thinking that its the first time me and my boyfriend played solo and I was not much of a help.
 
-That's how I decided to challenge myself to take out as many pwn challenges as I can in one day and in the end, I did the 5 pwn challenges left in 11 hrs (got some help from jiegec for the `fotispy2` chal I was stuck on). Here's the writeup.
-
-Here's the wakatime stats for that day
-
-![alt_text](/assets/img/uploads/wakatime.png)
+That's how I decided to challenge myself to take out as many pwn challenges as I can in one day and in the end, I did the 5 pwn challenges left in around 10 hrs (got some help from jiegec for the `fotispy2` chal I was stuck on). Here's the writeup.
 
 ## fotispy1
-solved in less than 1 hr. Very basic stack challenge.
+Very basic stack challenge.
 
 ```py
 from pwn import *
@@ -86,9 +82,6 @@ p.interactive()
 
 
 ## fotispy2
-
-Done in 2 hrs after the hint from jiegec.
-
 This seems to be a format string challenge, but it checks whether the input contains `%` and gives an error if it does. The main logic is as below
 
 ```c
@@ -251,8 +244,6 @@ p.interactive()
 
 ## fotispy3
 
-Done in around 3 hrs. (But wakatime shows 4 hrs including the time I was playing Honkai: Star Rail XD)
-
 not hard heap chal. It gives a heap overflow read/write. We can leak heap address directly. 
 
 Also it can allocate a FILE structure on heap. It contains libc-related pointers, so we can leak libc address from there.
@@ -381,8 +372,6 @@ p.interactive()
 
 ## fotispy4
 
-Done in around 1.5 hrs.
-
 a libc 2.23 challenge with UAF. The binary is not PIE and there are heap pointers on bss, so we can do the classic unlink attack.
 
 A tip to mark: the chunk containing the fake chunk should not be freed or we will encounter some strange errors.
@@ -470,9 +459,6 @@ p.interactive()
 ```
 
 ## fotispy5
-
-Done in maybe 3 hrs.
-
 Libc 2.23 with UAF, but we can only print the first 3 bytes of a chunk.
 
 Moreover, it gives a gadget of `malloc("/bin/sh")`. Usually we don't write to malloc hooks if we have arb-write primitives. **The only exception is arbitrary alloc attack using house of spirit in libc 2.23**. See the description on [CTF Wiki](https://ctf-wiki.org/pwn/linux/user-mode/heap/ptmalloc2/fastbin-attack/#arbitrary-alloc).
@@ -619,9 +605,6 @@ p.interactive()
 ```
 
 ## fotispy6
-
-solved in around 30 mins.
-
 libc 2.31 with UAF, just write to `__free_hook` and call free on a chunk containing `/bin/sh`.
 
 ```py
@@ -702,8 +685,6 @@ p.interactive()
 ```
 
 ## fotispy7
-
-Done in 2 - 3 hrs.
 
 We have a UAF but can only do the heap leak. However, we have an off-by-one so the primitives combined gives us a perfect condition for house of einherjar.
 

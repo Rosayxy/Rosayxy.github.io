@@ -130,7 +130,7 @@ void __fastcall create(__int64 a1)
 }
 ```
 
-I was stuck on how to bypass the `%` check. Then jiegec told me that though the `%` is filtered, and the cnt will not increase, but the `ptr + 0xA0C` string is not non-terminated, so when it is used as format string, it will continue to print the `title` in the next song. And if we have a format string in the title of the next song, we can use that to leak addresses and do writes.
+I was stuck on how to bypass the `%` check. Then jiegec told me that though the `%` is filtered, and the cnt will not increase, but the `ptr + 0xA0C` string is not null-terminated, so when it is used as format string, it will continue to print the `title` in the next song. And if we have a format string in the title of the next song, we can use that to leak addresses and do writes.
 
 Also, when I got the leaks and try for a rop, it fails by that it will cover up the cnt of the songs and will print our format string **twice**, so I resolve to do the classic house of apple 2 thing and use FSOP to solve.
 

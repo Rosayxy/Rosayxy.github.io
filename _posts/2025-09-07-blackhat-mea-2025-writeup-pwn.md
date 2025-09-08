@@ -46,10 +46,10 @@ We can write into the IO_FILE structures of both `stdout` and `stderr`, so its D
 ### leak
 First we do _IO_2_1_stdout_ leak, just like [in my previous blog](https://rosayxy.github.io/codegate-quals-2025-writeup/)
 
-We write to `flags`, changing it to `0xfbad1800`, and we partially overwrite the `IO_write_base`'s lowest byte. In my previous blog, we have to overwrite the last two bytes because the `IO_write_base`'s lowest byte is `0x3`, but here it is `0x43`, and we use `\n` to cover it to 0xa so that we can leak adjacent libc addresses.
+We write to `flags`, changing it to `0xfbad1800`, and we partially overwrite the `IO_write_base`'s lowest byte. In my previous blog, we have to overwrite the last two bytes because the `IO_write_base`'s lowest byte is `0x3`, but here it is `0x43` luckily, so we use one byte of `\n` to cover it to 0xa so that we can leak adjacent libc addresses.
 
 ### exploit
-After that, we can do a classic `house of` attack. At first, I tried house of apple 2 technique (as shown in the commented code below), but it didn't work. This is because in house of apple 2, we set the flag field to literal "  sh;" (with two space at the beginning), but scanf fails to read in the whitespaces. With some research, I found that [house of cat](https://bbs.kanxue.com/thread-273895.htm) can control the flag field with `/bin/sh\x00` (without leading spaces), so I switched to house of cat technique and it worked.
+After that, we can do a classic `house of` attack. At first, I tried house of apple 2 technique (as shown in the commented code below), but it didn't work. This is because in house of apple 2, we set the flag field to literal "  sh;" (with two space at the beginning), but `scanf` fails to read in the whitespaces. With some research, I found that [house of cat](https://bbs.kanxue.com/thread-273895.htm) can control the flag field with `/bin/sh\x00` (without leading spaces), so I switched to house of cat technique and it worked.
 
 ### exp
 ```py
@@ -93,7 +93,7 @@ p.interactive()
 ## calc
 Done with the help of our pwn expert k4ra5u and my bf jiegec.
 
-This binary is an implementation of a calculator using a vector as stack(it will be referred to as calc stack to distinguish from the real stack). The problem is that when it executes 2-operand operations (like +, -, *, /), it doesn't check if there are at least two elements in the calc stack. So we can underflow the calc stack (which is a vector on heap).
+This binary is an implementation of a calculator using a vector as stack (it will be referred to as calc stack to distinguish from the real stack). The problem is that when it executes 2-operand operations (like +, -, *, /), it doesn't check if there are at least two elements in the calc stack. So we can underflow the calc stack (which is a vector on heap).
 
 ### heap leak
 
@@ -153,7 +153,8 @@ I called for my bf jiegec for help to try reproducing it using docker locally. W
 
 Here is the way we debugged our exploit over TCP using docker:
 
-1. Dockerfile (credit to jiegec):
+Dockerfile (credit to jiegec):
+
 ```Dockerfile
 FROM ubuntu:24.04@sha256:4f1db91d9560cf107b5832c0761364ec64f46777aa4ec637cca3008f287c975e AS base
 WORKDIR /app

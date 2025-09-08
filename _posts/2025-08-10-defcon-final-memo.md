@@ -12,9 +12,6 @@ optimized_image: >-
 category: ctf
 tags:
   - heap challenges
-  - strace
-  - justCTF 2025
-  - FSOP
 author: rosayxy
 paginate: true
 ---

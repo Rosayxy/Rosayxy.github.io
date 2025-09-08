@@ -11,10 +11,7 @@ optimized_image: >-
   /assets/img/uploads/scores.png
 category: ctf
 tags:
-  - heap challenges
-  - strace
-  - justCTF 2025
-  - FSOP
+  - format string new techniques
 author: rosayxy
 paginate: true
 ---

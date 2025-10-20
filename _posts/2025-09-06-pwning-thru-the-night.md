@@ -1,5 +1,5 @@
 ---
-date: 2025-08-10 10:21:59
+date: 2025-09-06 10:21:59
 layout: post
 title: pwning thru the night
 subtitle: nailing down pwn challenges in nullcon 2025 (but only after the challenges ended)

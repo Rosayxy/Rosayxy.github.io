@@ -90,6 +90,10 @@ p.sendline(fake_io_file)
 p.interactive()
 ```
 
+### P.S
+
+plz checkout [my boyfriend's writeup](https://jia.je/ctf-writeups/2025-09-07-blackhat-mea-ctf-quals-2025/file101.html)! He claims his coding style is better than mine lol >_<
+
 ## calc
 Done with the help of our pwn expert k4ra5u and my bf jiegec.
 

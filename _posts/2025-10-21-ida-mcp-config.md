@@ -30,11 +30,9 @@ MCP server 的必要性在于，可以给大模型一些 domain-specific 的功�
 
 ## IDA mcp setup
 
-参考 (ida-pro-mcp)[https://github.com/mrexodia/ida-pro-mcp] 的 README 配置就行，大概分为如下几步
+参考 [ida-pro-mcp](https://github.com/mrexodia/ida-pro-mcp) 的 README 配置就行，大概分为如下几步
 
-1. 用 `pip install https://github.com/mrexodia/ida-pro-mcp/archive/refs/heads/main.zip` 安装 ida-pro-mcp 包，此时，有个 `ida-pro-mcp.exe` 的可执行文件会被安装到 Python 的 Scripts 目录下，如在本人机子上，是这个目录：
-
-    *C:\Users\<username>\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_<hash>\LocalCache\local-packages\Python313\Scripts*
+1. 用 `pip install https://github.com/mrexodia/ida-pro-mcp/archive/refs/heads/main.zip` 安装 ida-pro-mcp 包，此时，有个 `ida-pro-mcp.exe` 的可执行文件会被安装到 Python 的 Scripts 目录下，如在本人机子上，是这个目录: *C:\Users\<username>\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_<hash>\LocalCache\local-packages\Python313\Scripts*
 
 2. 把上述 scripts 目录加入到系统的 PATH 环境变量中
 
@@ -42,7 +40,7 @@ MCP server 的必要性在于，可以给大模型一些 domain-specific 的功�
 
 ## 使用
 
-1. 启动 IDA Pro，打开一个二进制文件，在 13337 窗口启动 MCP server:
+1. 启动 IDA Pro，打开一个二进制文件，在 13337 端口启动 MCP server:
 
 ![alt_text](/assets/img/uploads/ida-mcp.png)
 
@@ -76,3 +74,6 @@ MCP server 的必要性在于，可以给大模型一些 domain-specific 的功�
     ![alt_text](/assets/img/uploads/tools.png)
 
 4. 多次尝试之间建议 new chat 开启新的 LLM 会话，否则 LLM 可能会重复上次的错误回答然后偷懒不调用工具
+
+## acknowledgements
+感谢杰哥对本博客的帮助 ~

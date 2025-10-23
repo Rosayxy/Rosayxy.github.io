@@ -32,7 +32,7 @@ MCP server 的必要性在于，可以给大模型一些 domain-specific 的功�
 
 参考 [ida-pro-mcp](https://github.com/mrexodia/ida-pro-mcp) 的 README 配置就行，大概分为如下几步
 
-1. 用 `pip install https://github.com/mrexodia/ida-pro-mcp/archive/refs/heads/main.zip` 安装 ida-pro-mcp 包，此时，有个 `ida-pro-mcp.exe` 的可执行文件会被安装到 Python 的 Scripts 目录下，如在本人机子上，是这个目录: *C:\Users\<username>\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_<hash>\LocalCache\local-packages\Python313\Scripts*
+1. 用 `pip install https://github.com/mrexodia/ida-pro-mcp/archive/refs/heads/main.zip` 安装 ida-pro-mcp 包，此时，有个 `ida-pro-mcp.exe` 的可执行文件会被安装到 Python 的 Scripts 目录下，如在本人机子上，是这个目录: `C:\Users\<username>\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_<hash>\LocalCache\local-packages\Python313\Scripts`
 
 2. 把上述 scripts 目录加入到系统的 PATH 环境变量中
 

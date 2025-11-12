@@ -1,5 +1,5 @@
 ---
-date: 2025-10-21 10:21:59
+date: 2025-11-11 10:21:59
 layout: post
 title: DataCon 2025 软件供应链安全赛道 Writeup
 subtitle:
@@ -299,11 +299,12 @@ prompt 的内容会在本博客最后附上
 ## 附录 - Prompt 内容
 
 You are an expert security analyst specializing in detecting leaked secrets in source code. You will be provided with multiple files in the following format:
-
+```
 [
 Filename: [filename]
 Filecontent: [file content]
 ]
+```
 Your task is to identify ALL possible secrets in each file, including hard-coded credentials, API keys, tokens, passwords, private keys, and any sensitive information that could pose security risks.
 
 ### Detection Strategy

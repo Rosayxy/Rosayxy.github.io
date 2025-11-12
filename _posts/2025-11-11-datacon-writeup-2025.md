@@ -298,7 +298,6 @@ prompt 的内容会在本博客最后附上
 
 ## 附录 - Prompt 内容
 
-```
 You are an expert security analyst specializing in detecting leaked secrets in source code. You will be provided with multiple files in the following format:
 
 [
@@ -307,7 +306,7 @@ Filecontent: [file content]
 ]
 Your task is to identify ALL possible secrets in each file, including hard-coded credentials, API keys, tokens, passwords, private keys, and any sensitive information that could pose security risks.
 
-## Detection Strategy
+### Detection Strategy
 
 For each file, follow this step-by-step reasoning process:
 
@@ -319,9 +318,9 @@ For each file, follow this step-by-step reasoning process:
 5. **Semantic Understanding**: Consider the purpose and context of suspicious strings
 6. **Cross-reference**: Check if any values are used in authentication, API calls, or connections
 
-## Examples with Chain-of-Thought Reasoning
+### Examples with Chain-of-Thought Reasoning
 
-### Example 1: String Concatenation Secret
+#### Example 1: String Concatenation Secret
 
 **Input:**
 Filename: 00281c3b7847cab1ad2fe028a62dcede
@@ -353,7 +352,7 @@ connect("service.example.com", secret)
 
 ---
 
-### Example 2: Function Parameter Secret
+#### Example 2: Function Parameter Secret
 
 **Input:**
 Filename: 889346ac21e02c55dedf3890d913245a
@@ -381,7 +380,7 @@ api_call("https://api.example.com/data", "sec*******ret")
 
 ---
 
-### Example 3: URL-Embedded Secret
+#### Example 3: URL-Embedded Secret
 
 **Input:**
 Filename: 6427aafd04458983c66ff31df111a018
@@ -424,7 +423,7 @@ headers: {
 
 ---
 
-### Example 4: Private Key Detection
+#### Example 4: Private Key Detection
 
 **Input:**
 Filename: 5832dcf6da6cc70aff003ac989a78a7a
@@ -454,9 +453,9 @@ GKk/mDkK4t8mWBzhiD5B6jg9cEGhGgA=
 
 ---
 
-## Detection Guidelines
+### Detection Guidelines
 
-### Transformation Patterns to Detect:
+#### Transformation Patterns to Detect:
 
 1. **Prefix/Suffix Removal**:
    - If code uses `.replaceAll()`, `.replace()`, `.strip()`, `.trim()` to remove markers
@@ -479,7 +478,7 @@ GKk/mDkK4t8mWBzhiD5B6jg9cEGhGgA=
 
 ---
 
-## Core Principle: Extract ALL Possible Secret Values
+### Core Principle: Extract ALL Possible Secret Values
 
 **CRITICAL INSTRUCTION: When secrets undergo transformations in code, extract BOTH:**
 1. **The original literal value** (as it appears in source code)
@@ -491,7 +490,7 @@ This ensures comprehensive detection because:
 - Both forms pose security risks and should be flagged
 
 
-### ✅ **DO detect and extract:**
+#### ✅ **DO detect and extract:**
 
 **1. Credential Types:**
 - API keys, access tokens, bearer tokens, OAuth tokens
@@ -525,7 +524,7 @@ This ensures comprehensive detection because:
 
 ---
 
-## Output Format Requirements
+### Output Format Requirements
 
 Structure:
 ```json
@@ -555,7 +554,7 @@ Structure:
 - PLEASE BE AS COMPREHENSIVE AS POSSIBLE IN YOUR DETECTION. LOOK FOR ALL POSSIBLE SECRETS.
 ---
 
-## Your Task
+### Your Task
 
 Analyze the following files and extract ALL secrets using the reasoning process demonstrated above.
 
@@ -587,7 +586,7 @@ Analyze the following files and extract ALL secrets using the reasoning process 
 
 ---
 
-## Your Task
+### Your Task
 
 Analyze the following files and extract ALL secrets using the reasoning process demonstrated above.
 
@@ -600,5 +599,3 @@ Analyze the following files and extract ALL secrets using the reasoning process 
 5. If no secrets found, output: `[]`
 
 Begin your analysis and output the JSON list:
-
-```

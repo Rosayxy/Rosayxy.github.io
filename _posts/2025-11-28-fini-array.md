@@ -2,7 +2,7 @@
 date: 2025-11-28 10:31:59
 layout: post
 title: 浅浅打一个 fini array
-subtitle: 以研究生国赛（华为杯）2025 Whatheap 一题为例 
+subtitle: 
 description: >-
     long time no pwn ~
 image: >-

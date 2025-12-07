@@ -65,7 +65,7 @@ printf(fmt, args[0], args[1], args[2], args[3]);
 ```
 
 ### stack leak
-Upon doing this challenge, Tplus suggested the use of the `*` format specifier to bypass this check. Specifically, the stack leak is at rsp + 8 which is index 7 in the format string. If we use `%*d` format, the "*" The * means "read the field width from the next argument in the argument list." So this consumes two format parameters as the field width (an integer) and the actual value to print.
+Upon doing this challenge, Tplus suggested the use of the `*` format specifier to bypass this check. Specifically, the stack leak is at rsp + 8 which is index 7 in the format string. If we use `%*d` format, the * means "read the field width from the next argument in the argument list." So this consumes two format parameters as the field width (an integer) and the actual value to print.
 
 Therefore, if we use `%*d%*d%*d%p` format, the first three `%*d` will consume six arguments, and the fourth `%p` will read the seventh argument, which is the stack leak.
 
@@ -399,3 +399,5 @@ Qemu chall. My qemu skills are rusty and I can only do the basics. Stuck at inte
 
 Jiegec nailed soooooo many forensics challs. Love him. Seems fun. Gotta try some time.
 
+## challenges
+For a specific challenges handout, you can contact me via email rosaxinyu@gmail.com and provide proof of participation(such as team name and id).

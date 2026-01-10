@@ -15,8 +15,7 @@ tags:
 author: rosayxy
 paginate: true
 ---
-
-This is gotta be brief but will refine it later.
+This SECCON 14 quals was done with blue-lotus team. We got 8th place!
 
 ## Unserialize
 

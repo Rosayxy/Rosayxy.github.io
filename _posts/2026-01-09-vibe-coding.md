@@ -38,12 +38,28 @@ export LITELLM_MASTER_KEY="sk-1234"
 ```
 这个是沿用的 LiteLLM 启 Docker 的设置，实际上也可以换成其他的 key。
 
-仿照 “Using Multiple Models" 创建 config.yaml 文件
+仿照 “Using Multiple Models" 创建 config.yaml 文件，可以参考以下示例
+
+```yaml
+model_list:
+  # Configure the models you want to use
+  - model_name: claude-opus-4-6
+    litellm_params:
+      model: anthropic/claude-opus-4-6
+      api_key: <your_api_key>
+      api_base: <api_base_url>
+```
+
+启动 litellm
+
+```bash
+litellm --config path_to_config.yaml
+```
 
 ## 配置 Claude Code
 
 ```bash
-export ANTHROPIC_BASE_URL="http://0.0.0.0:4000"
+export ANTHROPIC_BASE_URL="http://127.0.0.1:4000"
 export ANTHROPIC_AUTH_TOKEN="$LITELLM_MASTER_KEY"
 ```
 

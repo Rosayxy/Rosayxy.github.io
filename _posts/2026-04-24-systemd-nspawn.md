@@ -1,7 +1,7 @@
 ---
 date: 2026-04-21 10:31:59
 layout: post
-title: 初步配置含 ASAN 链接的 systemd 的 nspawn 容器
+title: 初步配置 ASAN 链接的 systemd 的 nspawn 容器
 subtitle: 
 description: >- 
     patchelf 上大分
@@ -36,6 +36,8 @@ paginate: true
 
 直接从 systemd 项目中 meson install 的话，会有 d-bus daemon 等服务挂掉。这是因为 meson install 会替换 libsystemd.so.0 这个库为 ASAN 链接过的版本，然而 d-bus daemon 这些服务没有被 ASAN 链接，所以运行时会有如下问题：
 
+当然，这个问题的成因是这样的：我们用 ASAN 编译 systemd 的时候，对于大部分的可执行文件，是静态链接的 asan，但是对于 libsystemd.so.0 来说，它是动态链接的 asan，所以会出现上述问题。
+
 ```
 dbus-daemon[115]: @dbus-daemon: symbol lookup error: /lib/x86_64-linux-gnu/libsystemd.so.0: undefined symbol: __asan_option_detect_stack_use_after_return
 ```
@@ -50,7 +52,7 @@ dbus-daemon[115]: @dbus-daemon: symbol lookup error: /lib/x86_64-linux-gnu/libsy
 
 这是因为 ASAN 需要 track malloc 或者 free 这些函数的调用，所以需要被程序加载且第一个加载，而如上情景，程序依赖动态库，动态库再调用 ASAN 的函数/变量进行检查，此时程序和动态库使用同一个内存空间，如动态库访问一个堆上内存，ASAN 无法知道这个内存是否被程序申请或者释放过，所以无法进行 UAF 之类问题的 tracking，所以就有以上让程序第一个加载 ASAN 的要求了
 
-好的我们继续往后看，有这个问题之后，我试图在 boot 的时候往 systemd-nspawn 里 preload ASAN 的动态库，**但是！** 我们其他 ASAN 静态链接的库又会动态链接一遍 ASAN runtime，直接冲突报错....
+好的我们继续往后看，有这个问题之后，我试图在 boot 的时候往 systemd-nspawn 里 preload ASAN 的动态库，**但是！** 我们其他 ASAN 动态链接的库，或者静态链接了 ASAN 的程序又会动态链接一遍 ASAN runtime，直接冲突报错....
 
 但是因为这些服务都是 systemd 启动的，所以我一开始想让 systemd 启动其他如 systemd-logind, systemd-machined 这些服务的时候 preload ASAN 的动态库，但是这样需要改 systemd 的源码，感觉比较 dirty
 

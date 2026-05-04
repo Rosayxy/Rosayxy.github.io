@@ -1,5 +1,5 @@
 ---
-date: 2026-04-21 10:31:59
+date: 2026-04-24 10:31:59
 layout: post
 title: 初步配置 ASAN 链接的 systemd 的 nspawn 容器
 subtitle: 
@@ -14,6 +14,7 @@ tags:
   - systemd
   - nspawn
   - ASAN
+  - LD_DEBUG
 author: rosayxy
 paginate: true
 ---
@@ -67,3 +68,42 @@ dbus-daemon[115]: @dbus-daemon: symbol lookup error: /lib/x86_64-linux-gnu/libsy
 所以我们把 nspawn 的 base image upgrade 到 ubuntu 26.04 就好一些了，目测就挂了 netplan-configure.service，不过这个服务不影响我们测试 systemd 的功能，所以就先不管了 ~
 
 总的来说，虽然这个过程比较麻烦，但是我们成功地在 nspawn 里启动了我们自己编译的 ASAN 链接过的 systemd 了，感觉还是挺有成就感的，以及确实解决了问题 ~
+
+我又回来补充了，现在是五一的第三天凌晨...在睡觉、摸鱼、给 NCO 的小朋友们出题和搓 ppt 的间隙磕一会盐....
+
+大概就是，我继续研究了动态链接静态链接 ASAN 这一趴，大概就是我发现 /usr/lib/systemd/systemd 是静态链接的 ASAN，但是它依赖的我们手动链接的 libsystemd-core-261.so 和 libsystemd-shared-261.so 是动态链接的 ASAN，**但是运行起来没有任何问题！**
+
+这是因为 GCC 默认会在可执行程序和动态库中都动态链接 ASan 运行时库，利用动态链接的特性保证只有一份 ASan 运行时库；Clang 默认不会在动态库中链接 ASan 运行时库，而是在可执行程序中静态链接 ASan 运行时库，这样也保证了只有一份 ASan 运行时库，可以参考 [Clang ASAN 文档](https://clang.llvm.org/docs/AddressSanitizer.html)
+
+> Simply compile and link your program with -fsanitize=address flag. The AddressSanitizer run-time library should be linked to the final executable, so make sure to use clang (not ld) for the final link step. When linking shared libraries, the AddressSanitizer run-time is not linked, so -Wl,-z,defs may cause link errors (don’t use it with AddressSanitizer). 
+
+这样的话，ASAN 的 global symbols 都在可执行程序中，如图所示
+
+![alt_text](/assets/img/uploads/asan_binary.png)
+
+这些 symbols 都是全局的
+
+然后它依赖的动态库中有 ASAN 相关的 symbols，但是都是 undefined 如图
+
+![alt_text](/assets/img/uploads/asan_lib.png)
+
+就和我们一个正常的 binary 依赖一个 libc 中的函数（如动态链接情况下，依赖 libc 中的 printf 函数）的符号表是同一个情况
+
+所以其实如果调用到 ASAN 的函数或者变量，动态库会去可执行程序中找这个符号的定义，然后就能正常调用了，所以就没有问题了 ~
+
+已经到五一的第四天了，悲，明天还要去监考，希望能起来吧呜呜
+
+最后还有一个有意思的小点：
+
+遇到一个依赖的问题，可以理解为 systemd 依赖 libA 和 libB, libA 依赖 libB, ldd systemd 可以看到能正常找到依赖的 libA 和 libB 的路径，但是 ldd libA 依赖的 libB 找不到路径，但是 systemd 还是能正常运行，这是为什么呢？
+
+遂写示例代码尝试查询，在仓库 https://github.com/Rosayxy/dependency-demo
+
+可见存在以下输出
+
+```
+40807:	binding file /.../libA.so [0] to ./libB.so [0]: normal symbol `hello_from_B'
+```
+可以理解是如下原理：本质还是符号查询，而在运行时初始化的时候，系统会把 libA.so libB.so main 这些的符号表拼接在一起，像是 hello_from_B 这些符号都是全局的，所以 libA 说 “我需要 hello_from_B” 符号的地址，系统就会在 main 和 libA 和 libB 这些的总的大符号表里去找这个符号的定义，最终找到 libB 里有这个符号的定义，所以就能正常调用了 ~
+
+所以还是一个 linker and loader 的问题了，感觉还是挺有意思的 ~

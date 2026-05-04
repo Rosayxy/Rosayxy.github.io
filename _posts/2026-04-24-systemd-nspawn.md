@@ -35,17 +35,17 @@ paginate: true
 
 接下来是比较难的一步，如何替换容器本身的 systemd，同时保证我们启用的替换过的 systemd 能正常发挥功能？
 
-直接从 systemd 项目中 meson install 的话，会有 d-bus daemon 等服务挂掉。这是因为 meson install 会替换 libsystemd.so.0 这个库为 ASAN 链接过的版本，然而 d-bus daemon 这些服务没有被 ASAN 链接，所以运行时会有如下问题：
-
-当然，这个问题的成因是这样的：我们用 ASAN 编译 systemd 的时候，对于大部分的可执行文件，是静态链接的 asan，但是对于 libsystemd.so.0 来说，它是动态链接的 asan，所以会出现上述问题。
+直接从 systemd 项目中 meson install 的话，会有 d-bus daemon 等服务挂掉。这是因为 meson install 会替换 libsystemd.so.0 这个库为 ASAN 链接过的版本，然而 d-bus daemon 这些服务没有链接 ASAN，所以运行时会有如下问题：
 
 ```
 dbus-daemon[115]: @dbus-daemon: symbol lookup error: /lib/x86_64-linux-gnu/libsystemd.so.0: undefined symbol: __asan_option_detect_stack_use_after_return
 ```
 
-以及顺带做了个实验，写了一个程序和它依赖的动态库，分 1. 俩人都 ASAN 链接 2. 只有程序 ASAN 链接 3. 只有动态库 ASAN 链接
+当然，这个问题的成因是这样的：我们用 ASAN 编译 systemd 的时候，用的是 Clang 编译器，它对于可执行文件，默认是静态链接的 ASAN，但是对于 libsystemd.so.0 来说，它没有链接 ASAN，所以会出现上述问题。
 
-然后发现只有动态库 ASAN 链接而程序没有 ASAN 链接的情况下才会有报错，belike
+以及顺带用 GCC 做了个实验，写了一个程序和它依赖的动态库，分 1. 俩人都 ASAN 链接 2. 只有程序 ASAN 链接 3. 只有动态库 ASAN 链接；注意 GCC 默认会动态链接 ASAN 运行时
+
+然后发现在只有动态库链接 ASAN 而程序没有链接 ASAN 的情况下才会有报错，belike
 
 ```
 ==9014==ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
@@ -53,7 +53,7 @@ dbus-daemon[115]: @dbus-daemon: symbol lookup error: /lib/x86_64-linux-gnu/libsy
 
 这是因为 ASAN 需要 track malloc 或者 free 这些函数的调用，所以需要被程序加载且第一个加载，而如上情景，程序依赖动态库，动态库再调用 ASAN 的函数/变量进行检查，此时程序和动态库使用同一个内存空间，如动态库访问一个堆上内存，ASAN 无法知道这个内存是否被程序申请或者释放过，所以无法进行 UAF 之类问题的 tracking，所以就有以上让程序第一个加载 ASAN 的要求了
 
-好的我们继续往后看，有这个问题之后，我试图在 boot 的时候往 systemd-nspawn 里 preload ASAN 的动态库，**但是！** 我们其他 ASAN 动态链接的库，或者静态链接了 ASAN 的程序又会动态链接一遍 ASAN runtime，直接冲突报错....
+好的我们继续往后看，有这个问题之后，我试图在 boot 的时候往 systemd-nspawn 里 preload GCC 的 ASAN 的动态库，**但是！** 我们其他 ASAN 动态链接的库，或者静态链接了 ASAN 的程序又会有一份 ASAN runtime，直接冲突报错....
 
 但是因为这些服务都是 systemd 启动的，所以我一开始想让 systemd 启动其他如 systemd-logind, systemd-machined 这些服务的时候 preload ASAN 的动态库，但是这样需要改 systemd 的源码，感觉比较 dirty
 
@@ -71,7 +71,7 @@ dbus-daemon[115]: @dbus-daemon: symbol lookup error: /lib/x86_64-linux-gnu/libsy
 
 我又回来补充了，现在是五一的第三天凌晨...在睡觉、摸鱼、给 NCO 的小朋友们出题和搓 ppt 的间隙磕一会盐....
 
-大概就是，我继续研究了动态链接静态链接 ASAN 这一趴，大概就是我发现 /usr/lib/systemd/systemd 是静态链接的 ASAN，但是它依赖的我们手动链接的 libsystemd-core-261.so 和 libsystemd-shared-261.so 是动态链接的 ASAN，**但是运行起来没有任何问题！**
+大概就是，我继续研究了动态链接静态链接 ASAN 这一趴，大概就是我发现 /usr/lib/systemd/systemd 是静态链接的 ASAN，但是它依赖的我们手动链接的 libsystemd-core-261.so 和 libsystemd-shared-261.so 没有链接 ASAN，**但是运行起来没有任何问题！**
 
 这是因为 GCC 默认会在可执行程序和动态库中都动态链接 ASan 运行时库，利用动态链接的特性保证只有一份 ASan 运行时库；Clang 默认不会在动态库中链接 ASan 运行时库，而是在可执行程序中静态链接 ASan 运行时库，这样也保证了只有一份 ASan 运行时库，可以参考 [Clang ASAN 文档](https://clang.llvm.org/docs/AddressSanitizer.html)
 

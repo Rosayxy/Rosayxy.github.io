@@ -9,7 +9,7 @@ image: >-
   /assets/img/uploads/moon.jpg
 optimized_image: >-
   /assets/img/uploads/moon.jpg
-category: half-finished
+category: misc
 tags:
   - 运维
 author: rosayxy
